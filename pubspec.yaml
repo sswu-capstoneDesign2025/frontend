@@ -1,0 +1,43 @@
+name: capstone_story_app
+description: "A new Flutter project."
+# The following line prevents the package from being accidentally published to
+# pub.dev using `flutter pub publish`. This is preferred for private packages.
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.4 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.6
+  flutter_dotenv: ^5.2.1
+  http: ^1.3.0
+  flutter_riverpod: ^2.6.1
+  flutter_svg: ^2.1.0
+  shared_preferences: ^2.5.3
+  flutter_web_auth_2: ^4.1.0
+  kakao_flutter_sdk: ^1.9.7+3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - .env
+
+  fonts:
+    - family: BaedalJua
+      fonts:
+        - asset: assets/fonts/BMJUA_ttf.ttf
+
+    - family: HakgyoansimGeurimilgi
+      fonts:
+        - asset: assets/fonts/HakgyoansimGeurimilgi.ttf

@@ -1,0 +1,2 @@
+C:/Users/sunca/Desktop/capstone-frontend/android/app/.cxx/RelWithDebInfo/513e646t/x86_64/CMakeFiles/edit_cache.dir
+C:/Users/sunca/Desktop/capstone-frontend/android/app/.cxx/RelWithDebInfo/513e646t/x86_64/CMakeFiles/rebuild_cache.dir

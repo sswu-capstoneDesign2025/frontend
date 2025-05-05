@@ -9,7 +9,7 @@ class AuthService {
   }) async {
     final response = await http.post(
       //Uri.parse("http://localhost:8000/auth/login"),
-      Uri.parse("http://192.168.45.244:8000/auth/login"),
+      Uri.parse("http://192.168.0.18:8000/auth/login"),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({
         "username": username,

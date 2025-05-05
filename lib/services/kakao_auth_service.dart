@@ -1,56 +1,47 @@
 // 카카오 로그인 로직 (API 연동)
-//kakao_auth_service.dart
+// kakao_auth_service.dart
+
 import 'package:http/http.dart' as http;
-import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:capstone_story_app/services/auth_service.dart';
-import 'package:capstone_story_app/screens/home/home_screen.dart';
 import 'package:capstone_story_app/screens/auth/kakao_extra_info_page.dart';
+import 'package:capstone_story_app/screens/home/home_screen.dart';
+import 'package:capstone_story_app/screens/root_decider.dart';
 
 class KakaoAuthService {
-  static const String _baseUrl = "http://192.168.45.244:8000"; // ← 여기만 바꾸면 전체 반영
+  static const String _baseUrl = "http://192.168.0.18:8000";
 
+  static void _disableLinkStream() {
+    RootDeciderState.setLinkListening(false);
+  }
+
+  static void _enableLinkStream() {
+    RootDeciderState.setLinkListening(true);
+  }
+
+  /// 브라우저로 카카오 로그인 URL을 열고, 딥링크 콜백은 RootDecider에서 처리합니다.
   static Future<void> loginWithKakao(BuildContext context) async {
-    // 1. 로그인 URL 요청
-    final loginUrlRes = await http.get(Uri.parse("$_baseUrl/auth/kakao/login"));
-    final redirectUrl = jsonDecode(loginUrlRes.body)["redirect_url"];
-    print("카카오 로그인 URL: $redirectUrl");
-    // 2. 사용자 인증
-    final result = await FlutterWebAuth2.authenticate(
-      url: redirectUrl,
-      callbackUrlScheme: "http",
-    );
+    try {
+      _disableLinkStream();
 
-    // 3. 인가코드 추출
-    final code = Uri.parse(result).queryParameters["code"];
+      print("🟡 1. 로그인 URL 요청 시작");
+      final loginUrlRes = await http.get(Uri.parse("$_baseUrl/auth/kakao/login"));
+      final redirectUrl = jsonDecode(loginUrlRes.body)["redirect_url"];
+      print("🟡 2. 로그인 리디렉션 URL 수신: $redirectUrl");
 
-    // 4. 백엔드에 code 전달
-    final callbackRes = await http.get(
-      Uri.parse("$_baseUrl/auth/kakao/callback?code=$code"),
-    );
-
-    if (callbackRes.statusCode == 200) {
-      final json = jsonDecode(callbackRes.body);
-      final token = json["access_token"];
-      await AuthService.saveToken(token);
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      print("🟡 3. 외부 브라우저로 로그인 URL 열기");
+      await launchUrlString(
+        redirectUrl,
+        mode: LaunchMode.externalApplication,
       );
-    } else if (callbackRes.statusCode == 307 || callbackRes.statusCode == 302) {
-      final location = callbackRes.headers["location"];
-      final uri = Uri.parse(location!);
-      final kakaoId = uri.queryParameters["kakao_id"];
 
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => KakaoExtraInfoPage(kakaoId: kakaoId!),
-        ),
-      );
-    } else {
-      throw Exception("카카오 로그인 실패: ${callbackRes.body}");
+      // 콜백된 딥링크(myapp://auth?…)는 RootDecider가 _handleUri에서 처리합니다.
+    } catch (e) {
+      print("❌ 카카오 로그인 중 오류: $e");
+    } finally {
+      _enableLinkStream();
     }
   }
 
@@ -77,4 +68,3 @@ class KakaoAuthService {
     }
   }
 }
-

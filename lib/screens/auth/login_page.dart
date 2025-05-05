@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:capstone_story_app/screens/auth/username_login_page.dart';
 import 'package:capstone_story_app/services/kakao_auth_service.dart';
+import 'package:capstone_story_app/services/naver_auth_service.dart';
+import 'package:capstone_story_app/screens/home/home_screen.dart';
+import 'package:capstone_story_app/services/auth_service.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -103,8 +106,23 @@ class LoginPage extends StatelessWidget {
                 ),
                 label: '네이버 로그인',
                 labelColor: Colors.white,
-                onPressed: () {
-                  // TODO: 네이버 OAuth 로직
+                onPressed: () async {
+                  try {
+                    final token = await NaverAuthService.loginWithNaver();
+                    if (token != null) {
+                      await AuthService.saveToken(token);
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (_) => const HomeScreen()),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("네이버 로그인 실패")),
+                      );
+                    }
+                  } catch (e) {
+                    print("네이버 로그인 예외 발생: $e");
+                  }
                 },
               ),
               const SizedBox(height: 20),
@@ -119,12 +137,9 @@ class LoginPage extends StatelessWidget {
                 ),
                 label: '카카오 로그인',
                 labelColor: Color(0xFF3C1E1E),
-                onPressed: () async {
-                  try {
-                    await KakaoAuthService.loginWithKakao(context);
-                  } catch (e) {
-                    print("카카오 로그인 실패: $e");
-                  }
+                onPressed: () {
+                  // 외부 브라우저로 로그인 URL 열기
+                  KakaoAuthService.loginWithKakao(context);
                 },
               ),
               const Spacer(),

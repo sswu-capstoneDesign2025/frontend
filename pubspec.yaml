@@ -20,6 +20,8 @@ dependencies:
   shared_preferences: ^2.5.3
   flutter_web_auth_2: ^4.1.0
   kakao_flutter_sdk: ^1.9.7+3
+  flutter_appauth: ^9.0.0
+  app_links: ^6.4.0
 
 dev_dependencies:
   flutter_test:

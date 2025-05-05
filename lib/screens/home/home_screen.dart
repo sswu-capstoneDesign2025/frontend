@@ -1,6 +1,9 @@
 // lib/screens/home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:capstone_story_app/widgets/custom_layout.dart';
+import 'package:capstone_story_app/services/auth_service.dart';
+import 'package:capstone_story_app/screens/auth/login_page.dart';
+import 'package:capstone_story_app/screens/root_decider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -57,6 +60,31 @@ class _HomeScreenState extends State<HomeScreen> {
                 width: 320,
                 height: 320,
               ),
+            ),
+          ),
+          const SizedBox(height: 40),
+
+          // ✅ 임시 로그아웃 버튼
+          ElevatedButton(
+            onPressed: () async {
+              await AuthService.clearToken();
+              if (context.mounted) {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => const RootDecider()),
+                      (route) => false,
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text(
+              '로그아웃',
+              style: TextStyle(color: Colors.white),
             ),
           ),
         ],

@@ -25,30 +25,43 @@ class RootDeciderState extends State<RootDecider> {
   bool _checked = false;
   bool _loggedIn = false;
 
+  static void setLinkListening(bool enable) {
+    final sub = _instance?._sub;
+    if (sub != null) {
+      enable ? sub.resume() : sub.pause();
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _instance = this;
     _appLinks = AppLinks();
     _listenToLinkStream();
-    _checkLogin();
+    _initApp();  // ← 수정: 여기서 토큰+딜레이 처리
+  }
+
+  Future<void> _initApp() async {
+    // 1) 저장된 토큰 읽기
+    final token = await AuthService.getToken();
+
+    // 2) 스플래시 최소 표시 시간 보장
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (!mounted) return;
+    // 3) 상태 업데이트 (build()가 LoginPage/HomeScreen 결정)
+    setState(() {
+      _loggedIn = token != null;
+      _checked = true;
+    });
   }
 
   void _listenToLinkStream() {
     _sub = _appLinks.uriLinkStream.listen((uri) {
-      print("🔗 딥링크 수신: $uri");
       _handleUri(uri);
     }, onError: (err) {
       print('❌ 링크 스트림 오류: $err');
     });
-  }
-
-  /// 로그인 중에는 pause(), 그 외엔 resume() 으로 제어
-  static void setLinkListening(bool enable) {
-    final sub = _instance?._sub;
-    if (sub != null) {
-      enable ? sub.resume() : sub.pause();
-    }
   }
 
   Future<void> _handleUri(Uri? uri) async {
@@ -68,8 +81,10 @@ class RootDeciderState extends State<RootDecider> {
       final token = uri.queryParameters["token"];
       if (token != null) {
         await AuthService.saveToken(token);
+        // 딥링크로 로그인 완료된 후 즉시 Home으로
         setState(() {
           _loggedIn = true;
+          _checked = true;
         });
       }
     }
@@ -82,17 +97,12 @@ class RootDeciderState extends State<RootDecider> {
     super.dispose();
   }
 
-  Future<void> _checkLogin() async {
-    final token = await AuthService.getToken();
-    setState(() {
-      _loggedIn = token != null;
-      _checked = true;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
+    // _checked가 false인 동안만 SplashScreen 유지
     if (!_checked) return const SplashScreen();
+
+    // 이후에 로그인 여부에 따라 화면 결정
     return _loggedIn ? const HomeScreen() : const LoginPage();
   }
 }

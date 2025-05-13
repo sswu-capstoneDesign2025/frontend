@@ -9,7 +9,7 @@ import 'package:capstone_story_app/screens/userstore/other_user_store_screen.dar
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // await dotenv.load(fileName: '.env');
+  await dotenv.load(fileName: '.env');
 
   runApp(
     ProviderScope(
@@ -45,11 +45,9 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const OtherUserStoreScreen(),
-      // const RootDecider(),
+      home: const RootDecider(),
       routes: {
-        '/home': (_) => const OtherUserStoreScreen(),
-        // HomeScreen(), // ← named route 등록
+        '/home': (_) => const HomeScreen(),
       },
     );
   }

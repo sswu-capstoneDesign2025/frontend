@@ -5,6 +5,7 @@ import 'package:capstone_story_app/services/kakao_auth_service.dart';
 import 'package:capstone_story_app/services/naver_auth_service.dart';
 import 'package:capstone_story_app/screens/home/home_screen.dart';
 import 'package:capstone_story_app/services/auth_service.dart';
+import 'package:capstone_story_app/screens/auth/signup_page.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -147,7 +148,10 @@ class LoginPage extends StatelessWidget {
               // 회원가입
               GestureDetector(
                 onTap: () {
-                  // TODO: Navigator.push to SignUpPage
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SignUpPage()),
+                  );
                 },
                 child: const Text(
                   '회원가입',

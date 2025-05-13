@@ -3,11 +3,13 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:capstone_story_app/screens/root_decider.dart';
 import 'package:capstone_story_app/screens/home/home_screen.dart';
+import 'package:capstone_story_app/screens/userstore/user_store.dart';
+import 'package:capstone_story_app/screens/userstore/other_user_store_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await dotenv.load(fileName: '.env');
+  // await dotenv.load(fileName: '.env');
 
   runApp(
     ProviderScope(
@@ -43,9 +45,11 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const RootDecider(),
+      home: const OtherUserStoreScreen(),
+      // const RootDecider(),
       routes: {
-        '/home': (_) => const HomeScreen(),                  // ← named route 등록
+        '/home': (_) => const OtherUserStoreScreen(),
+        // HomeScreen(), // ← named route 등록
       },
     );
   }

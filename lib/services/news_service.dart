@@ -16,7 +16,8 @@ Future<List<Map<String, String>>> fetchNewsFromText(String text) async {
   );
 
   if (response.statusCode == 200) {
-    final List<dynamic> data = jsonDecode(response.body);
+    final decoded = utf8.decode(response.bodyBytes); 
+    final List<dynamic> data = jsonDecode(decoded);   // body → decoded
 
     return data.map<Map<String, String>>((item) => {
       'url': item['url'] ?? '',
@@ -25,4 +26,5 @@ Future<List<Map<String, String>>> fetchNewsFromText(String text) async {
   } else {
     throw Exception('뉴스 검색 및 요약 실패: ${response.statusCode}');
   }
+
 }

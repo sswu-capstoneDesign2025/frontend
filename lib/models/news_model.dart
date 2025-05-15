@@ -1,8 +1,11 @@
 class News {
+  final String? url; //  nullable 처리
   final String title;
   final String content;
 
-  News({required this.title, required this.content});
+  News({
+    this.url,
+    required this.title,
+    required this.content,
+  });
 }
-
-

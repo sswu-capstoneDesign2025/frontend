@@ -32,6 +32,7 @@ class _NewsScreenState extends State<NewsScreen> {
             .map((e) => News(
                   title: e['title'] ?? e['url'] ?? '',
                   content: e['summary'] ?? '',
+                  url: e['url'] ?? '', 
                 ))
             .toList();
         isLoading = false;
@@ -61,7 +62,7 @@ class _NewsScreenState extends State<NewsScreen> {
                   const Padding(
                     padding: EdgeInsets.only(left: 17),
                     child: Text(
-                      "오늘의 뉴스 모음",
+                      "🔍관련 뉴스 모음",
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,

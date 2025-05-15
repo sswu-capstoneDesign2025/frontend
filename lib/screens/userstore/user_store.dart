@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:capstone_story_app/widgets/custom_layout.dart';
 import 'package:capstone_story_app/screens/userstore/user_store_detail.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class UserStoreScreen extends StatefulWidget {
   const UserStoreScreen({super.key});
@@ -14,6 +15,7 @@ class UserStoreScreen extends StatefulWidget {
 class _UserStoreScreenState extends State<UserStoreScreen> {
   int _selectedIndex = 2; // 예시로 다른 탭 인덱스
   List<Map<String, dynamic>> userRecords = [];
+  static final String baseUrl = dotenv.env['API_BASE_URL']!;
 
   @override
   void initState() {
@@ -23,7 +25,7 @@ class _UserStoreScreenState extends State<UserStoreScreen> {
 
   Future<void> _fetchUserRecords() async {
     final response =
-        await http.get(Uri.parse('http://127.0.0.1:8000/summary-notes/'));
+        await http.get(Uri.parse("$baseUrl/summary-notes/"));
 
     if (response.statusCode == 200) {
       final decodedBody = utf8.decode(response.bodyBytes);

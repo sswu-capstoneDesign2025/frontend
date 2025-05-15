@@ -4,6 +4,7 @@ import 'dart:convert';
 
 import 'package:capstone_story_app/widgets/custom_layout.dart';
 import 'package:capstone_story_app/screens/userstore/user_store_detail.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class OtherUserStoreScreen extends StatefulWidget {
   const OtherUserStoreScreen({super.key});
@@ -17,6 +18,7 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
   List<dynamic> otherUserRecords = [];
 
   final String defaultProfileUrl = 'https://i.pravatar.cc/150?img=1';
+  static final String baseUrl = dotenv.env['API_BASE_URL']!;
 
   @override
   void initState() {
@@ -27,7 +29,7 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
   Future<void> fetchOtherUserRecords() async {
     try {
       final response = await http
-          .get(Uri.parse('http://localhost:8000/other-user-records/'));
+          .get(Uri.parse("$baseUrl/other-user-records/"));
 
       if (response.statusCode == 200) {
         final decodedBody = utf8.decode(response.bodyBytes);

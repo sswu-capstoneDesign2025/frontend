@@ -4,8 +4,10 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:capstone_story_app/services/auth_service.dart';
 import 'package:capstone_story_app/screens/home/home_screen.dart';
+
 
 class KakaoExtraInfoPage extends StatefulWidget {
   final String kakaoId;
@@ -19,6 +21,8 @@ class _KakaoExtraInfoPageState extends State<KakaoExtraInfoPage> {
   final nameController = TextEditingController();
   final phoneController = TextEditingController();
   bool _isLoading = false;
+
+  static final String baseUrl = dotenv.env['API_BASE_URL']!;
 
   @override
   void dispose() {
@@ -42,7 +46,7 @@ class _KakaoExtraInfoPageState extends State<KakaoExtraInfoPage> {
 
     try {
       final response = await http.post(
-        Uri.parse("http://192.168.0.18:8000/auth/kakao/extra-info"),
+        Uri.parse("$baseUrl/auth/kakao/extra-info"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "kakao_id": widget.kakaoId,

@@ -1,4 +1,7 @@
+// signup_page.dart
+
 import 'package:flutter/material.dart';
+import 'package:capstone_story_app/services/auth_service.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({Key? key}) : super(key: key);
@@ -27,27 +30,73 @@ class _SignUpPageState extends State<SignUpPage> {
   }
 
   Future<void> checkIdAvailability() async {
+    final username = idController.text.trim();
+
+    if (username.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("아이디를 입력해주세요.")),
+      );
+      return;
+    }
+
     setState(() {
       isChecking = true;
       showIdCheckMessage = true;
     });
 
-    await Future.delayed(const Duration(seconds: 1)); // API 대체
+    try {
+      final available = await AuthService.isUsernameAvailable(username);
 
-    setState(() {
-      isIdAvailable = true;
-      isChecking = false;
-    });
+      setState(() {
+        isIdAvailable = available;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("중복 확인 실패: $e")),
+      );
+      setState(() {
+        isIdAvailable = false;
+      });
+    } finally {
+      setState(() {
+        isChecking = false;
+      });
+    }
   }
 
-  void submitSignUp() {
-    // TODO: 회원가입 API 호출
-    print("회원가입 정보:");
-    print("ID: ${idController.text}");
-    print("PW: ${passwordController.text}");
-    print("Name: ${nameController.text}");
-    print("Phone: ${phoneController.text}");
+
+  void submitSignUp() async {
+    final username = idController.text.trim();
+    final password = passwordController.text.trim();
+    final name = nameController.text.trim();
+    final phone = phoneController.text.trim();
+
+    if (username.isEmpty || password.isEmpty || name.isEmpty || phone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("모든 정보를 입력해주세요.")),
+      );
+      return;
+    }
+
+    final result = await AuthService.signup(
+      username: username,
+      password: password,
+      name: name,
+      phoneNumber: phone,
+    );
+
+    if (result['success']) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("회원가입이 완료되었습니다!")),
+      );
+      Navigator.pop(context); // 로그인 화면으로 이동
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("회원가입 실패: ${result['error']}")),
+      );
+    }
   }
+
 
   @override
   Widget build(BuildContext context) {

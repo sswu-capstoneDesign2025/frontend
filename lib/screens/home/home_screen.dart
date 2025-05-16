@@ -1,10 +1,11 @@
-// lib/screens/home_screen.dart
+// 파일: lib/screens/home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:capstone_story_app/widgets/custom_layout.dart';
 import 'package:capstone_story_app/services/auth_service.dart';
 import 'package:capstone_story_app/screens/auth/login_page.dart';
 import 'package:capstone_story_app/screens/root_decider.dart';
 import 'package:capstone_story_app/screens/home/news_screen.dart';
+import 'package:capstone_story_app/screens/userstore/other_user_store_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,9 +18,25 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 1;
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    if (index == 0) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const NewsScreen(inputText: "오늘 뉴스 알려줘"),
+        ),
+        (route) => false,
+      );
+    } else if (index == 2) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const OtherUserStoreScreen()),
+        (route) => false,
+      );
+    } else {
+      setState(() {
+        _selectedIndex = index;
+      });
+    }
   }
 
   @override
@@ -53,7 +70,6 @@ class _HomeScreenState extends State<HomeScreen> {
             Center(
               child: GestureDetector(
                 onTap: () async {
-                  // 추후 STT 연결 가능
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -69,8 +85,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const SizedBox(height: 40),
-
-            // ✅ 임시 로그아웃 버튼
             ElevatedButton(
               onPressed: () async {
                 await AuthService.clearToken();

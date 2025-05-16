@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
+import 'package:capstone_story_app/screens/home/home_screen.dart'; // ✅ 추가
 import 'package:capstone_story_app/widgets/custom_layout.dart';
 import 'package:capstone_story_app/screens/userstore/user_store_detail.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:capstone_story_app/screens/home/news_screen.dart';
 
 class OtherUserStoreScreen extends StatefulWidget {
   const OtherUserStoreScreen({super.key});
@@ -28,8 +29,8 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
 
   Future<void> fetchOtherUserRecords() async {
     try {
-      final response = await http
-          .get(Uri.parse("$baseUrl/other-user-records/"));
+      final response =
+          await http.get(Uri.parse("$baseUrl/other-user-records/"));
 
       if (response.statusCode == 200) {
         final decodedBody = utf8.decode(response.bodyBytes);
@@ -45,9 +46,25 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
   }
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    if (index == 0) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const NewsScreen(inputText: "오늘 뉴스 알려줘"),
+        ),
+        (route) => false,
+      );
+    } else if (index == 1) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        (route) => false,
+      );
+    } else {
+      setState(() {
+        _selectedIndex = index;
+      });
+    }
   }
 
   @override

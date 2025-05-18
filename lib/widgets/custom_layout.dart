@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'custom_app_bar.dart';
 import 'custom_bottom_nav.dart';
+import 'package:capstone_story_app/screens/health/health_screen.dart';
+
 
 class CustomLayout extends StatelessWidget {
   final int selectedIndex;
@@ -21,7 +23,12 @@ class CustomLayout extends StatelessWidget {
       backgroundColor: Colors.white,
       appBar: CustomAppBar(
         onAlarmTap: () {
-          // TODO: 알람 화면 이동
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const HealthScreen(),
+            ),
+          );
         },
         onProfileTap: () {
           // TODO: 내 정보 화면 이동

@@ -6,7 +6,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 /// 키워드를 추출하고 관련 뉴스 URL 3개를 찾아
 /// 본문을 요약한 결과를 리스트로 반환
 Future<List<Map<String, String>>> fetchNewsFromText(String text) async {
-  final apiUrl = '${dotenv.env['API_URL']}/search-news-urls/';
+  final apiUrl = '${dotenv.env['API_BASE_URL']}/search-news-urls/';
   print('📡 요청 URL (뉴스 검색 + 요약): $apiUrl');
 
   final response = await http.post(

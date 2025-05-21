@@ -9,7 +9,7 @@ class AuthService {
   static final String baseUrl = dotenv.env['API_BASE_URL']!;
 
   /// 일반 로그인
-  static Future<String?> loginWithUsernamePassword({
+  static Future<void> loginWithUsernamePassword({
     required String username,
     required String password,
   }) async {
@@ -24,7 +24,10 @@ class AuthService {
 
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body);
-      return json["access_token"];
+      final token = json["access_token"];
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('jwt_token', token);
+      await prefs.setBool('is_logged_in', true);
     } else {
       throw Exception("로그인 실패: ${response.body}");
     }
@@ -75,6 +78,29 @@ class AuthService {
     }
   }
 
+  /// 사용자 정보 받아오기
+  Future<Map<String, dynamic>?> fetchUserProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt_token');
+
+    if (token == null) return null;
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/auth/me'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+      return decoded;
+    } else {
+      print('❌ 사용자 정보 조회 실패: ${response.body}');
+      return null;
+    }
+  }
+
 
   /// JWT 토큰 저장
   static Future<void> saveToken(String token) async {
@@ -92,5 +118,6 @@ class AuthService {
   static Future<void> clearToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('jwt_token');
+    await prefs.setBool('is_logged_in', false);
   }
 }

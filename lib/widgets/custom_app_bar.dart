@@ -48,13 +48,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         Padding(
           padding: const EdgeInsets.only(top: 10.0),
           child: IconButton(
-            icon: const Icon(Icons.alarm, color: Colors.black, size: 37),
-            onPressed: onAlarmTap,
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(top: 10.0),
-          child: IconButton(
             icon: const Icon(Icons.account_circle, color: Colors.black, size: 40),
             onPressed: onProfileTap,
           ),

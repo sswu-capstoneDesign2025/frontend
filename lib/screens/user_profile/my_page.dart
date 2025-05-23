@@ -197,12 +197,9 @@ class _MyPageState extends State<MyPage> {
                       ? MemoryImage(_webImageBytes!)
                       : (imageUrl != null
                       ? NetworkImage(
-                      '$baseUrl${imageUrl!}?v=${DateTime.now().millisecondsSinceEpoch}'
-                        )as ImageProvider
+                      '$baseUrl${imageUrl!}?v=${DateTime.now().millisecondsSinceEpoch}')
+                  as ImageProvider
                       : const AssetImage('assets/images/profile_sample.png')),
-                  child: _webImageBytes == null && imageUrl == null
-                      ? null // 기본 이미지로 대체되므로 아이콘은 필요 없음
-                      : null,
                 ),
               ),
 
@@ -228,16 +225,17 @@ class _MyPageState extends State<MyPage> {
 
               const SizedBox(height: 12),
 
-              // 수정 버튼
+              // 수정 버튼 → 옵션 바텀시트 호출
               ElevatedButton(
-                onPressed: () {},
+                onPressed: _showEditOptions,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: Colors.black,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
                 ),
                 child: const Text(
                   '수정',
@@ -257,9 +255,11 @@ class _MyPageState extends State<MyPage> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _buildOutlinedButton('로그아웃', _logout, width: 165, height: 50),
+                    _buildOutlinedButton('로그아웃', _logout,
+                        width: 165, height: 50),
                     const SizedBox(width: 12),
-                    _buildOutlinedButton('탈퇴', _logout, width: 165, height: 50),
+                    _buildOutlinedButton('탈퇴', _logout,
+                        width: 165, height: 50),
                   ],
                 ),
               ),
@@ -269,6 +269,58 @@ class _MyPageState extends State<MyPage> {
         ),
       ),
     );
+  }
+
+  /// 수정 버튼 눌렀을 때 나올 바텀 시트
+  void _showEditOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera),
+              title: const Text('프로필 사진 변경'),
+              onTap: () {
+                Navigator.pop(context);
+                if (kIsWeb) {
+                  _pickImageWeb();
+                } else {
+                  _pickImage();
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete),
+              title: const Text('프로필 사진 삭제'),
+              onTap: () {
+                Navigator.pop(context);
+                deleteProfileImage();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 프로필 사진 삭제 API 호출
+  Future<void> deleteProfileImage() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('access_token') ?? prefs.getString('jwt_token');
+    final response = await http.delete(
+      Uri.parse('$baseUrl/auth/profile-image'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      print('🗑️ 프로필 사진 삭제 성공');
+    } else {
+      print('❌ 프로필 사진 삭제 실패: ${response.statusCode}');
+    }
+    await _loadUserData(); // 삭제 후 UI 갱신
   }
 
   Widget _buildMenuButton(String text, VoidCallback onPressed) {

@@ -40,6 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _activeDot = 0;
   Timer? _dotTimer;
   int? _countdown;
+  String _sessionState = "initial";
 
   @override
   void initState() {
@@ -84,142 +85,216 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _toggleVoiceInteraction() async {
-    if (_isCountdown) return; // 카운트다운 중엔 무시
+    if (_isCountdown) {
+      print('⚠️ 카운트다운 중이라 무시됨');
+      return;
+    }
+
     if (!await _recorder.hasPermission()) {
       print('❌ 마이크 권한 없음');
       return;
     }
 
     if (_isRecording) {
-      // 녹음 종료
+      print('🛑 녹음 중단 시도');
       _dotTimer?.cancel();
       _activeDot = 0;
+      setState(() => _isRecording = false); // 먼저 false 처리
 
       String? filePath;
-      late Uint8List webBytes;
+      Uint8List? webBytes;
 
-      if (kIsWeb) {
-        await _recorder.stop();
-        await _webSubscription?.cancel();
-        await Future.delayed(const Duration(milliseconds: 200));
-        final webBytes = Uint8List.fromList(_webChunks);
-        final wavBytes = addWavHeader(webBytes, 16000, 1);
-        _webChunks.clear();
-        print('⛔ 웹 수동 중단, bytes length=${wavBytes.length}');
-        await _handleUploadAndSTT(filePath: null, webBytes: wavBytes);
-      } else {
-        filePath = await _recorder.stop();
-        print('⛔ 수동 중단 (파일): $filePath');
-        await _handleUploadAndSTT(filePath: filePath);
+      try {
+        if (kIsWeb) {
+          await _recorder.stop();
+          await _webSubscription?.cancel();
+          await Future.delayed(const Duration(milliseconds: 200));
+          webBytes = Uint8List.fromList(_webChunks);
+          final wavBytes = addWavHeader(webBytes, 16000, 1);
+          _webChunks.clear();
+          print('⛔ 웹 수동 중단, bytes length=${wavBytes.length}');
+          await _handleVoiceInteraction(webBytes: wavBytes);
+        } else {
+          filePath = await _recorder.stop();
+          print('⛔ 수동 중단 (파일): $filePath');
+          await _handleVoiceInteraction(filePath: filePath);
+        }
+      } catch (e) {
+        print('🛑 녹음 종료 처리 중 오류: $e');
+      } finally {
+        // 혹시라도 예외 발생 시에도 항상 isRecording = false 보장
+        setState(() => _isRecording = false);
       }
-
-      setState(() => _isRecording = false);
     } else {
-      await _startCountdownAndRecord(); // 카운트다운 후 녹음
+      print('⏺️ 카운트다운 시작 요청');
+      await _startCountdownAndRecord();
     }
   }
 
   Future<void> _startCountdownAndRecord() async {
+    if (_isCountdown || _isRecording) {
+      print('⚠️ 이미 녹음 중이거나 카운트다운 중이라 무시됨');
+      return;
+    }
+
     setState(() {
       _isCountdown = true;
       _countdown = 3;
     });
 
-    for (int i = 3; i >= 1; i--) {
-      setState(() => _countdown = i);
-      await Future.delayed(const Duration(seconds: 1));
-    }
-
-    setState(() {
-      _countdown = null;
-      _isCountdown = false;
-      _isRecording = true;
-      _recordStartTime = DateTime.now();
+    // 3 → 2 → 1 → null 순서로 지연 없이 처리
+    Future.delayed(const Duration(seconds: 1), () {
+      if (!mounted) return;
+      setState(() => _countdown = 2);
     });
 
-    _dotTimer = Timer.periodic(const Duration(milliseconds: 400), (timer) {
+    Future.delayed(const Duration(seconds: 2), () {
+      if (!mounted) return;
+      setState(() => _countdown = 1);
+    });
+
+    Future.delayed(const Duration(seconds: 3), () async {
+      if (!mounted) return;
       setState(() {
-        _activeDot = (_activeDot + 1) % 3;
+        _countdown = null;
+        _isCountdown = false;
+        _isRecording = true;
+        _recordStartTime = DateTime.now();
       });
-    });
 
-    if (kIsWeb) {
-      final stream = await _recorder.startStream(
-        const RecordConfig(
-          encoder: AudioEncoder.pcm16bits,
-          sampleRate: 16000,
-          numChannels: 1,
-        ),
-      );
-      _webChunks = [];
-      _webSubscription = stream.listen((data) {
-        _webChunks.addAll(data);
-        print('🔸 chunk received: ${data.length} bytes, total=${_webChunks.length}');
+      print('▶️ 녹음 시작');
+
+      _dotTimer = Timer.periodic(const Duration(milliseconds: 400), (timer) {
+        setState(() {
+          _activeDot = (_activeDot + 1) % 3;
+        });
       });
-    } else {
-      final dir = await getTemporaryDirectory();
-      final tmpPath = '${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.wav';
-      await _recorder.start(
-        const RecordConfig(encoder: AudioEncoder.wav),
-        path: tmpPath,
-      );
-      print('▶️ 파일 녹음 시작: $tmpPath');
-    }
+
+      try {
+        if (kIsWeb) {
+          final stream = await _recorder.startStream(
+            const RecordConfig(
+              encoder: AudioEncoder.pcm16bits,
+              sampleRate: 16000,
+              numChannels: 1,
+            ),
+          );
+          _webChunks = [];
+          _webSubscription = stream.listen((data) {
+            _webChunks.addAll(data);
+          });
+        } else {
+          final dir = await getTemporaryDirectory();
+          final tmpPath =
+              '${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.wav';
+          await _recorder.start(
+            const RecordConfig(encoder: AudioEncoder.wav),
+            path: tmpPath,
+          );
+          print('🎙️ 파일 녹음 시작: $tmpPath');
+        }
+      } catch (e) {
+        print('❌ 녹음 시작 실패: $e');
+        setState(() => _isRecording = false);
+      }
+    });
   }
 
-  Future<void> _handleUploadAndSTT({
+
+  Future<void> _handleVoiceInteraction({
     String? filePath,
     Uint8List? webBytes,
   }) async {
-    final req = http.MultipartRequest(
-      'POST',
-      Uri.parse('$_baseUrl/upload/audio/'),
-    );
+    final uri = Uri.parse('$_baseUrl/process/audio/');
+    final req = http.MultipartRequest('POST', uri);
 
     if (webBytes != null) {
       req.files.add(
         http.MultipartFile.fromBytes(
           'file',
           webBytes,
-          filename: 'voice_record.wav',
+          filename: 'voice.wav',
           contentType: MediaType('audio', 'wav'),
         ),
       );
-      print('📤 웹 bytes 업로드, length=${webBytes.length}');
     } else if (filePath != null) {
       req.files.add(await http.MultipartFile.fromPath('file', filePath));
-      print('📤 파일 업로드: $filePath');
     } else {
       return;
     }
+
+    // 세션 상태 같이 전송
+    req.fields['session_state'] = _sessionState;
+
+    // 로그인된 사용자 이름 추가도 가능
+    final prefs = await SharedPreferences.getInstance();
+    final username = prefs.getString('username'); // 저장되어 있다고 가정
+    if (username != null) req.fields['username'] = username;
 
     final res = await req.send();
     final body = await res.stream.bytesToString();
-    print('🔍 업로드 응답 status=${res.statusCode}, body=$body');
+    print('🎯 처리 응답: $body');
 
     if (res.statusCode != 200) {
-      print('🛑 업로드 실패');
+      print('🛑 처리 실패');
       return;
     }
 
-    final fileUrl = jsonDecode(body)['file_url'];
+    final decoded = jsonDecode(body);
+    String responseText = '응답 없음';
+    final type = decoded['type'] ?? 'unknown';
+    final nextState = decoded['next_state'] ?? 'initial';
 
-    final sttRes = await http.post(
-      Uri.parse('$_baseUrl/transcribe/'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'file_url': fileUrl}),
-    );
-    final decoded = utf8.decode(sttRes.bodyBytes);
-    print('🔍 STT 요청 status=${sttRes.statusCode}, body=$decoded');
+    Map<String, dynamic>? result;
 
-    if (sttRes.statusCode == 200) {
-      final text = jsonDecode(decoded)['transcribed_text'] ?? '변환 실패';
-      setState(() => _transcribedText = text);
-      print('📝 변환된 텍스트: $text');
+    if (type == 'news' || type == 'weather') {
+      result = decoded['result'];
+      responseText = result?['combined_summary'] ?? '요약 없음';
     } else {
-      print('🛑 STT 오류: $decoded');
+      responseText = decoded['response'] ?? '응답 없음';
+    }
+    print('🧠 분류 결과 type: $type, nextState: $nextState');
+
+    setState(() {
+      _transcribedText = responseText;
+      if (nextState == "complete") {
+        print('✅ 대화 플로우 완료! 상태 초기화');
+        _sessionState = "initial";
+      }
+      else if(nextState == "initial") {
+        print('✅ 초기화 필요! 상태 초기화');
+        _sessionState = "initial";
+      }
+      else {
+        _sessionState = nextState;
+      }
+    });
+
+    // 분기 처리
+    if (type == 'news' || type == 'weather') {
+      final result = decoded['result'];
+      final summaries = result?['summaries'] as List<dynamic>?;
+
+      if (summaries != null && summaries.isNotEmpty) {
+        for (var i = 0; i < summaries.length; i++) {
+          final item = summaries[i] as Map<String, dynamic>;
+          final url = item['url'] ?? 'URL 없음';
+          final summary = item['summary'] ?? '요약 없음';
+
+          print('📰 [기사 ${i + 1}]\n📎 URL: $url\n📝 요약: $summary\n');
+        }
+      }
+
+      final keywords = result?['keywords']?.join(', ') ?? '키워드 없음';
+      print('🔍 키워드: $keywords\n\n');
+      print('🧾 통합 요약문: $responseText');
+    } else if (type == 'story') {
+      print('🗣️ 응답: $responseText / 다음 상태: $nextState');
+    } else if (type == 'invalid') {
+      print('⚠️ 무의미한 입력 감지됨. 상태: $nextState');
     }
   }
+
 
   @override
   void dispose() {
@@ -227,7 +302,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _recorder.dispose();
     super.dispose();
   }
-
 
 
   @override
@@ -241,7 +315,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(height: 25),
+            const SizedBox(height: 15),
 
             // 녹음 버튼 + 점
             Stack(
@@ -290,13 +364,17 @@ class _HomeScreenState extends State<HomeScreen> {
                             color: Colors.black.withOpacity(0.6),
                           ),
                         ),
-                        Text(
-                          '$_countdown',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 80,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'HakgyoansimGeurimilgi',
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 300),
+                          child: Text(
+                            '$_countdown',
+                            key: ValueKey(_countdown),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 80,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'HakgyoansimGeurimilgi',
+                            ),
                           ),
                         ),
                       ],
@@ -307,7 +385,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
 
 
-            const SizedBox(height: 50),
+            const SizedBox(height: 60),
 
             // 📦 흰색 버튼 박스
             Container(

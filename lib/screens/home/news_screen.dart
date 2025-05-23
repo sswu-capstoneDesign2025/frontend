@@ -19,6 +19,7 @@ class NewsScreen extends StatefulWidget {
 
 class _NewsScreenState extends State<NewsScreen> {
   List<News> newsList = [];
+  String combinedNewsSummary = '';
   bool isLoading = true;
 
   @override
@@ -29,7 +30,10 @@ class _NewsScreenState extends State<NewsScreen> {
 
   Future<void> loadNewsFromAPI() async {
     try {
-      final summaries = await fetchNewsFromText(widget.inputText);
+      final result = await fetchNewsFromText(widget.inputText);
+
+      final summaries = result['summaries'] as List<dynamic>;
+      final combinedSummary = result['combined_summary'] as String;
 
       setState(() {
         newsList = summaries
@@ -39,6 +43,7 @@ class _NewsScreenState extends State<NewsScreen> {
                   url: e['url'] ?? '',
                 ))
             .toList();
+        combinedNewsSummary = combinedSummary;
         isLoading = false;
       });
     } catch (e) {

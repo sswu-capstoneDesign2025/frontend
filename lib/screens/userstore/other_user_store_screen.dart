@@ -114,7 +114,7 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
             dialogBackgroundColor: const Color(0xFFF1FFF1), // 다이얼로그 내부 배경색
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(
-                foregroundColor: Colors.green[900],
+                foregroundColor: Colors.black,
               ),
             ),
           ),
@@ -155,14 +155,15 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFB5E1B5) : Colors.white,
-          border: Border.all(color: const Color(0xFF7AC37A)),
-          borderRadius: BorderRadius.circular(20),
+          color: isSelected ? const Color(0x5E446F24) : Colors.white,
+          border: Border.all(color: const Color(0xFF446F24), width: 1.5),
+          borderRadius: BorderRadius.circular(13),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: Colors.green[900],
+            fontFamily: 'HakgyoansimGeurimilgi',
+            color: Colors.black,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -175,15 +176,18 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: ConstrainedBox(
         constraints: const BoxConstraints(
-          minWidth: double.infinity,
+          minWidth: 332,
           maxHeight: 260, // 고정 높이
         ),
         child: Container(
           width: double.infinity,
           decoration: BoxDecoration(
-            color: const Color(0xFFE6F5E6),
+            color: const Color(0xFFE3FFCD),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFF7AC37A)),
+            border: Border.all(
+              color: const Color(0xFF446F24),
+              width: 1.5,
+            ),
           ),
           padding: const EdgeInsets.all(12),
           child: SingleChildScrollView(
@@ -221,7 +225,9 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
                         selectedDateRange == null
                             ? '날짜 선택'
                             : '${DateFormat('yyyy-MM-dd').format(selectedDateRange!.start)} ~ ${DateFormat('yyyy-MM-dd').format(selectedDateRange!.end)}',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                            fontFamily: 'HakgyoansimGeurimilgi',
+                            fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -229,13 +235,31 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    alignment: WrapAlignment.center, // ✅ 중앙 정렬
+                    alignment: WrapAlignment.center,
                     children: regions.map((region) {
+                      final bool isSelected =
+                          selectedRegion == region; // ✅ 여기서 선언
                       return ChoiceChip(
-                        label: Text(region),
-                        selected: selectedRegion == region,
-                        selectedColor: const Color(0xFFB5E1B5),
+                        label: Text(
+                          region,
+                          style: TextStyle(
+                            fontFamily: 'HakgyoansimGeurimilgi',
+                            fontWeight: FontWeight.w600, // ✅ 글자 두께 추가
+                            color: isSelected ? Colors.black : Colors.black,
+                          ),
+                        ),
+                        selected: isSelected,
+                        selectedColor: const Color(0x5E446F24),
                         backgroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(
+                            color: isSelected
+                                ? const Color(0xFF446F24)
+                                : const Color(0xFF446F24),
+                            width: 1.5,
+                          ),
+                        ),
                         onSelected: (_) {
                           setState(() {
                             selectedRegion = region;
@@ -249,13 +273,33 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    alignment: WrapAlignment.center, // ✅ 중앙 정렬
+                    alignment: WrapAlignment.center,
                     children: topics.map((topic) {
+                      final bool isSelected =
+                          selectedTopic == topic; // ✅ 선택 여부 저장
                       return ChoiceChip(
-                        label: Text(topic),
-                        selected: selectedTopic == topic,
-                        selectedColor: const Color(0xFFB5E1B5),
-                        backgroundColor: Colors.white,
+                        label: Text(
+                          topic,
+                          style: TextStyle(
+                            fontFamily: 'HakgyoansimGeurimilgi',
+                            fontWeight: FontWeight.w600, // ✅ 글자 두께 추가
+                            color: isSelected
+                                ? Colors.black
+                                : Colors.black, // ✅ 글자색
+                          ),
+                        ),
+                        selected: isSelected,
+                        selectedColor: const Color(0x5E446F24), // ✅ 선택된 배경색
+                        backgroundColor: Colors.white, // ✅ 비선택 배경
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(
+                            color: isSelected
+                                ? const Color(0xFF446F24)
+                                : const Color(0xFF446F24),
+                            width: 1.5,
+                          ),
+                        ),
                         onSelected: (_) {
                           setState(() {
                             selectedTopic = topic;
@@ -275,9 +319,9 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
 
   Widget _buildSortRow() {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.end,
         children: [
           GestureDetector(
             onTap: () {
@@ -289,6 +333,7 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
             child: Text(
               '• 랜덤순  ',
               style: TextStyle(
+                fontFamily: 'HakgyoansimGeurimilgi',
                 fontWeight:
                     sortOrder == '랜덤순' ? FontWeight.bold : FontWeight.normal,
                 color: sortOrder == '랜덤순' ? Colors.green[900] : Colors.black,
@@ -305,6 +350,7 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
             child: Text(
               '• 최신순',
               style: TextStyle(
+                fontFamily: 'HakgyoansimGeurimilgi',
                 fontWeight:
                     sortOrder == '최신순' ? FontWeight.bold : FontWeight.normal,
                 color: sortOrder == '최신순' ? Colors.green[900] : Colors.black,
@@ -327,7 +373,7 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.green.shade100),
+          border: Border.all(color: const Color(0xFF446F24), width: 2.0),
         ),
         child: ListTile(
           contentPadding:
@@ -344,18 +390,37 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
               ),
             );
           },
-          leading: CircleAvatar(
-            radius: 24,
-            backgroundImage: NetworkImage(profileUrl),
-            backgroundColor: Colors.grey[300],
+          leading: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.4), // 그림자 색상 및 투명도
+                  spreadRadius: 1,
+                  blurRadius: 4,
+                  offset: Offset(0, 2), // 그림자 방향
+                ),
+              ],
+            ),
+            child: CircleAvatar(
+              radius: 24,
+              backgroundColor: Colors.white,
+              backgroundImage: (record['profileUrl'] ?? '').isNotEmpty
+                  ? NetworkImage(record['profileUrl'])
+                  : const AssetImage('assets/images/baru.png') as ImageProvider,
+            ),
           ),
           title: Text(
             record['author'] ?? '',
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            style: const TextStyle(
+                fontFamily: 'HakgyoansimGeurimilgi',
+                fontWeight: FontWeight.bold,
+                fontSize: 14),
           ),
           subtitle: Text(
             record['title'] ?? '',
-            style: const TextStyle(fontSize: 13),
+            style: const TextStyle(
+                fontFamily: 'HakgyoansimGeurimilgi', fontSize: 13),
           ),
           trailing: const Icon(Icons.volume_up_rounded),
         ),

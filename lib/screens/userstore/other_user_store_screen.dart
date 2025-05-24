@@ -163,6 +163,7 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
           label,
           style: TextStyle(
             fontFamily: 'HakgyoansimGeurimilgi',
+            fontSize: 20,
             color: Colors.black,
             fontWeight: FontWeight.w600,
           ),
@@ -232,42 +233,47 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
                     ),
                   ),
                 if (selectedCategory == '지역')
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    alignment: WrapAlignment.center,
-                    children: regions.map((region) {
-                      final bool isSelected =
-                          selectedRegion == region; // ✅ 여기서 선언
-                      return ChoiceChip(
-                        label: Text(
-                          region,
-                          style: TextStyle(
-                            fontFamily: 'HakgyoansimGeurimilgi',
-                            fontWeight: FontWeight.w600, // ✅ 글자 두께 추가
-                            color: isSelected ? Colors.black : Colors.black,
+                  SizedBox(
+                    height: 130, // 칩 높이 48 + 간격 고려
+                    child: GridView.count(
+                      crossAxisCount: 4,
+                      childAspectRatio: 2.5, // 칩 너비/높이 비율 조정
+                      physics: const NeverScrollableScrollPhysics(), // 스크롤 금지
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 8, horizontal: 8),
+                      mainAxisSpacing: 8,
+                      crossAxisSpacing: 8,
+                      children: regions.map((region) {
+                        final bool isSelected = selectedRegion == region;
+                        return ChoiceChip(
+                          label: Text(
+                            region,
+                            style: const TextStyle(
+                              fontFamily: 'HakgyoansimGeurimilgi',
+                              fontWeight: FontWeight.w600,
+                              fontSize: 17,
+                              color: Colors.black,
+                            ),
                           ),
-                        ),
-                        selected: isSelected,
-                        selectedColor: const Color(0x5E446F24),
-                        backgroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(
-                            color: isSelected
-                                ? const Color(0xFF446F24)
-                                : const Color(0xFF446F24),
-                            width: 1.5,
+                          selected: isSelected,
+                          selectedColor: const Color(0x5E446F24),
+                          backgroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: const BorderSide(
+                              color: Color(0xFF446F24),
+                              width: 1.5,
+                            ),
                           ),
-                        ),
-                        onSelected: (_) {
-                          setState(() {
-                            selectedRegion = region;
-                          });
-                          applyFilters();
-                        },
-                      );
-                    }).toList(),
+                          onSelected: (_) {
+                            setState(() {
+                              selectedRegion = region;
+                            });
+                            applyFilters();
+                          },
+                        );
+                      }).toList(),
+                    ),
                   ),
                 if (selectedCategory == '주제')
                   Wrap(
@@ -282,6 +288,7 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
                           topic,
                           style: TextStyle(
                             fontFamily: 'HakgyoansimGeurimilgi',
+                            fontSize: 20,
                             fontWeight: FontWeight.w600, // ✅ 글자 두께 추가
                             color: isSelected
                                 ? Colors.black
@@ -334,6 +341,7 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
               '• 랜덤순  ',
               style: TextStyle(
                 fontFamily: 'HakgyoansimGeurimilgi',
+                fontSize: 20,
                 fontWeight:
                     sortOrder == '랜덤순' ? FontWeight.bold : FontWeight.normal,
                 color: sortOrder == '랜덤순' ? Colors.green[900] : Colors.black,
@@ -351,6 +359,7 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
               '• 최신순',
               style: TextStyle(
                 fontFamily: 'HakgyoansimGeurimilgi',
+                fontSize: 20,
                 fontWeight:
                     sortOrder == '최신순' ? FontWeight.bold : FontWeight.normal,
                 color: sortOrder == '최신순' ? Colors.green[900] : Colors.black,
@@ -415,12 +424,12 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
             style: const TextStyle(
                 fontFamily: 'HakgyoansimGeurimilgi',
                 fontWeight: FontWeight.bold,
-                fontSize: 14),
+                fontSize: 20),
           ),
           subtitle: Text(
             record['title'] ?? '',
             style: const TextStyle(
-                fontFamily: 'HakgyoansimGeurimilgi', fontSize: 13),
+                fontFamily: 'HakgyoansimGeurimilgi', fontSize: 20),
           ),
           trailing: const Icon(Icons.volume_up_rounded),
         ),

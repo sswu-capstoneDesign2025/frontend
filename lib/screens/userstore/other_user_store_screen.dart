@@ -8,6 +8,8 @@ import 'package:capstone_story_app/screens/userstore/user_store_detail.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:capstone_story_app/screens/home/news_screen.dart';
 
+import '../../services/custom_http_client.dart';
+
 class OtherUserStoreScreen extends StatefulWidget {
   const OtherUserStoreScreen({super.key});
 
@@ -41,8 +43,9 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
 
   Future<void> fetchOtherUserRecords() async {
     try {
-      final response =
-          await http.get(Uri.parse("$baseUrl/other-user-records/"));
+      final client = CustomHttpClient(context);
+      final response = await client.get(Uri.parse("$baseUrl/other-user-records/"));
+
       if (response.statusCode == 200) {
         final decodedBody = utf8.decode(response.bodyBytes);
         final records = json.decode(decodedBody);
@@ -462,9 +465,8 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
   @override
   Widget build(BuildContext context) {
     return CustomLayout(
-      selectedIndex: _selectedIndex,
-      onItemTapped: _onItemTapped,
-      body: Column(
+      isHome: false,
+      child: Column(
         children: [
           _buildFilterArea(),
           _buildSortRow(),
@@ -472,10 +474,10 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
             child: filteredRecords.isEmpty
                 ? const Center(child: Text('결과 없음'))
                 : ListView.builder(
-                    itemCount: filteredRecords.length,
-                    itemBuilder: (context, index) =>
-                        _buildRecordCard(filteredRecords[index]),
-                  ),
+              itemCount: filteredRecords.length,
+              itemBuilder: (context, index) =>
+                  _buildRecordCard(filteredRecords[index]),
+            ),
           ),
         ],
       ),

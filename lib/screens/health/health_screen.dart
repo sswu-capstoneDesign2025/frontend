@@ -1,5 +1,3 @@
-// 📁 lib/screens/health/health_screen.dart
-
 import 'package:flutter/material.dart';
 
 class HealthScreen extends StatefulWidget {
@@ -40,43 +38,60 @@ class _HealthScreenState extends State<HealthScreen> {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Colors.black12),
             ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("나이: 72세", style: TextStyle(fontWeight: FontWeight.bold)),
-                    Text("성별: 남성", style: TextStyle(fontWeight: FontWeight.bold)),
-                    Text("지역: 대구", style: TextStyle(fontWeight: FontWeight.bold)),
-                  ],
-                ),
-                const Spacer(),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    const Text("관심", style: TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 4,
-                      children: const [
-                        Chip(label: Text('고혈압'), backgroundColor: Color(0xFFD7F3C7)),
-                        Chip(label: Text('관절염'), backgroundColor: Color(0xFFD7F3C7)),
-                        Chip(label: Text('당뇨'), backgroundColor: Color(0xFFD7F3C7)),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
+            child: IntrinsicHeight(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // 왼쪽 정보
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: const [
+                      Text("나이: 72세", style: TextStyle(fontWeight: FontWeight.bold)),
+                      SizedBox(height: 4),
+                      Text("성별: 남성", style: TextStyle(fontWeight: FontWeight.bold)),
+                      SizedBox(height: 4),
+                      Text("지역: 대구", style: TextStyle(fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  const SizedBox(width: 16),
+
+                  // ✅ 세로선 (높이 자동)
+                  VerticalDivider(
+                    color: Colors.black26,
+                    thickness: 1,
+                    width: 32, // 좌우 여백 확보용
+                  ),
+
+                  // 오른쪽 관심사
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const Text("관심", style: TextStyle(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      const Column(
+                          children: [
+                            Chip(label: Text('고혈압'), backgroundColor: Color(0xFFD7F3C7)),
+                            SizedBox(height: 6),
+                            Chip(label: Text('관절염'), backgroundColor: Color(0xFFD7F3C7)),
+                            SizedBox(height: 6),
+                            Chip(label: Text('당뇨'), backgroundColor: Color(0xFFD7F3C7)),
+                          ]
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
+
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               children: [
-                _buildAlarmTile(
-                    "당뇨 알람", "매일 오전 9시, 오후 ...", diabetesAlarm, (val) {
+                _buildAlarmTile("당뇨 알람", "매일 오전 9시, 오후 ...", diabetesAlarm, (val) {
                   setState(() => diabetesAlarm = val);
                 }),
                 _buildAlarmTile("스트레칭 알람", "매일 오전 9시", stretchingAlarm, (val) {
@@ -95,7 +110,12 @@ class _HealthScreenState extends State<HealthScreen> {
 
   Widget _buildAlarmTile(String title, String subtitle, bool value, Function(bool) onChanged) {
     return Card(
+      color: Colors.white,
       margin: const EdgeInsets.symmetric(vertical: 8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.black12),
+      ),
       child: ListTile(
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(subtitle),
@@ -104,4 +124,3 @@ class _HealthScreenState extends State<HealthScreen> {
     );
   }
 }
-

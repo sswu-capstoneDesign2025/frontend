@@ -307,146 +307,149 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return CustomLayout(
-      selectedIndex: _selectedIndex,
-      onItemTapped: _onItemTapped,
+      appBarTitle: '말벗',
+      isHome: true,
       backgroundColor: const Color(0xFFE3FFCD),
-      titleText: "말벗",
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 15),
+      child: Container(
+        color: const Color(0xFFE3FFCD),
+        width: double.infinity,
+        height: double.infinity,
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 15),
+              // 녹음 버튼 + 점
+              Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.center,
+                children: [
+                  //ui 밀림 방지 공간
+                  const SizedBox(height: 30),
 
-            // 녹음 버튼 + 점
-            Stack(
-              clipBehavior: Clip.none,
-              alignment: Alignment.center,
-              children: [
-                //ui 밀림 방지 공간
-                const SizedBox(height: 30),
+                  // 실제 점 표시
+                  if (_isRecording)
+                    Positioned(
+                      top: -30,
+                      child: _buildRecordingDots(),
+                    ),
 
-                // 실제 점 표시
-                if (_isRecording)
-                  Positioned(
-                    top: -30,
-                    child: _buildRecordingDots(),
-                  ),
-
-                GestureDetector(
-                  onTap: _toggleVoiceInteraction,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Container(
-                        width: 290,
-                        height: 290,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Color(0xFF78CF97),
-                        ),
-                      ),
-                      if (_isRecording)
-                        const SpinKitThreeBounce(
-                          color: Colors.white,
-                          size: 30,
-                        ),
-                      Image.asset(
-                        'assets/images/baru.png',
-                        width: 290,
-                        height: 290,
-                      ),
-                      if (_countdown != null) ...[
+                  GestureDetector(
+                    onTap: _toggleVoiceInteraction,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
                         Container(
                           width: 290,
                           height: 290,
-                          decoration: BoxDecoration(
+                          decoration: const BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Colors.black.withOpacity(0.6),
+                            color: Color(0xFF78CF97),
                           ),
                         ),
-                        AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 300),
-                          child: Text(
-                            '$_countdown',
-                            key: ValueKey(_countdown),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 80,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'HakgyoansimGeurimilgi',
+                        if (_isRecording)
+                          const SpinKitThreeBounce(
+                            color: Colors.white,
+                            size: 30,
+                          ),
+                        Image.asset(
+                          'assets/images/baru.png',
+                          width: 290,
+                          height: 290,
+                        ),
+                        if (_countdown != null) ...[
+                          Container(
+                            width: 290,
+                            height: 290,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.black.withOpacity(0.6),
                             ),
                           ),
-                        ),
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 300),
+                            child: Text(
+                              '$_countdown',
+                              key: ValueKey(_countdown),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 80,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'HakgyoansimGeurimilgi',
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
-                  ),
-                ),
-              ],
-            ),
-
-
-            const SizedBox(height: 60),
-
-            // 📦 흰색 버튼 박스
-            Container(
-              width: 400,
-              height: 280,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Stack(
-                children: [
-                  Column(
-                    children: [
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: _buildGridButton(
-                                  Icons.article, "뉴스", () => _onItemTapped(0)),
-                            ),
-                            Expanded(
-                              child: _buildGridButton(
-                                  Icons.groups, "수다", () => _onItemTapped(2)),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: _buildGridButton(
-                                  'assets/images/weather.svg',
-                                  "날씨",
-                                      () {}),
-                            ),
-                            Expanded(
-                              child: _buildGridButton(
-                                  'assets/images/health.svg',
-                                  "건강",
-                                      () {}),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  Align(
-                    alignment: Alignment.center,
-                    child:
-                    Container(width: 2, height: 200, color: Colors.grey[300]),
-                  ),
-                  Align(
-                    alignment: Alignment.center,
-                    child:
-                    Container(width: 300, height: 2, color: Colors.grey[300]),
+                    ),
                   ),
                 ],
               ),
-            ),
-          ],
+
+
+              const SizedBox(height: 60),
+
+              // 📦 흰색 버튼 박스
+              Container(
+                width: 400,
+                height: 280,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Stack(
+                  children: [
+                    Column(
+                      children: [
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: _buildGridButton(
+                                    Icons.article, "뉴스", () => _onItemTapped(0)),
+                              ),
+                              Expanded(
+                                child: _buildGridButton(
+                                    Icons.groups, "수다", () => _onItemTapped(2)),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: _buildGridButton(
+                                    'assets/images/weather.svg',
+                                    "날씨",
+                                        () {}),
+                              ),
+                              Expanded(
+                                child: _buildGridButton(
+                                    'assets/images/health.svg',
+                                    "건강",
+                                        () {}),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    Align(
+                      alignment: Alignment.center,
+                      child:
+                      Container(width: 2, height: 200, color: Colors.grey[300]),
+                    ),
+                    Align(
+                      alignment: Alignment.center,
+                      child:
+                      Container(width: 300, height: 2, color: Colors.grey[300]),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

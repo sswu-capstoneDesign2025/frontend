@@ -1,17 +1,16 @@
 // 상단 AppBar
-
+import 'package:capstone_story_app/screens/home/home_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:capstone_story_app/screens/user_profile/my_page.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final VoidCallback? onAlarmTap;
-  final VoidCallback? onProfileTap;
   final Color backgroundColor;
   final String? titleText;
+  final bool isHome;
 
   const CustomAppBar({
-    this.onAlarmTap,
-    this.onProfileTap,
-    this.backgroundColor = Colors.white, // 기본은 흰색
+    this.backgroundColor = Colors.white,
+    this.isHome = false,
     this.titleText,
     super.key,
   });
@@ -24,12 +23,21 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       surfaceTintColor: backgroundColor,
       elevation: 0,
       centerTitle: false,
-      leading: Navigator.of(context).canPop()
-          ? IconButton(
-        icon: const Icon(Icons.arrow_back, color: Colors.black),
-        onPressed: () => Navigator.of(context).pop(),
-      )
-          : null,
+      leading: isHome
+          ? null
+          : Padding(
+        padding: const EdgeInsets.only(left: 8.0, top: 10.0),
+        child: IconButton(
+          icon: const Icon(Icons.home, color: Colors.black, size: 40),
+          onPressed: () {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const HomeScreen()),
+                  (route) => false,
+            );
+          },
+        ),
+      ),
+
       title: titleText != null
           ? Padding(
         padding: const EdgeInsets.only(left: 8.0, top: 10.0),
@@ -48,8 +56,13 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         Padding(
           padding: const EdgeInsets.only(top: 10.0),
           child: IconButton(
-            icon: const Icon(Icons.account_circle, color: Colors.black, size: 40),
-            onPressed: onProfileTap,
+            icon: const Icon(Icons.account_circle,
+                color: Colors.black, size: 40),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const MyPage()),
+              );
+            },
           ),
         ),
         const SizedBox(width: 8),

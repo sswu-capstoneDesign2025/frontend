@@ -5,6 +5,8 @@ import 'package:capstone_story_app/screens/userstore/user_store_detail.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+import '../../services/custom_http_client.dart';
+
 class UserStoreScreen extends StatefulWidget {
   const UserStoreScreen({super.key});
 
@@ -24,8 +26,8 @@ class _UserStoreScreenState extends State<UserStoreScreen> {
   }
 
   Future<void> _fetchUserRecords() async {
-    final response =
-        await http.get(Uri.parse("$baseUrl/summary-notes/"));
+    final client = CustomHttpClient(context);
+    final response = await client.get(Uri.parse('$baseUrl/summary-notes/'));
 
     if (response.statusCode == 200) {
       final decodedBody = utf8.decode(response.bodyBytes);
@@ -58,10 +60,9 @@ class _UserStoreScreenState extends State<UserStoreScreen> {
   @override
   Widget build(BuildContext context) {
     return CustomLayout(
-      selectedIndex: _selectedIndex,
-      onItemTapped: _onItemTapped,
-      body: userRecords.isEmpty
-          ? Center(child: CircularProgressIndicator())
+      isHome: false,
+      child: userRecords.isEmpty
+          ? const Center(child: CircularProgressIndicator())
           : ListView.builder(
               padding: const EdgeInsets.all(24),
               itemCount: userRecords.length,

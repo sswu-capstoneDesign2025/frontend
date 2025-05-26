@@ -73,9 +73,8 @@ class _NewsScreenState extends State<NewsScreen> {
   @override
   Widget build(BuildContext context) {
     return CustomLayout(
-      selectedIndex: 0,
-      onItemTapped: _onItemTapped,
-      body: isLoading
+      isHome: false,
+      child: isLoading
           ? const Center(child: CircularProgressIndicator())
           : Padding(
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),

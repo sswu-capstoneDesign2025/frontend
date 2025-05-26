@@ -4,6 +4,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter/material.dart';
+import 'package:capstone_story_app/services/custom_http_client.dart';
 
 class AuthService {
   static final String baseUrl = dotenv.env['API_BASE_URL']!;
@@ -79,18 +81,18 @@ class AuthService {
   }
 
   /// 사용자 정보 받아오기
-  Future<Map<String, dynamic>?> fetchUserProfile() async {
+  Future<Map<String, dynamic>?> fetchUserProfile(BuildContext context) async {
+    final client = CustomHttpClient(context);
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('jwt_token');
+    final token = prefs.getString('access_token') ?? prefs.getString('jwt_token');
 
     if (token == null) return null;
 
-    final response = await http.get(
-      Uri.parse('$baseUrl/auth/me'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
-    );
+    final request = http.Request('GET', Uri.parse('$baseUrl/auth/me'));
+    request.headers['Authorization'] = 'Bearer $token';
+
+    final streamed = await client.send(request);
+    final response = await http.Response.fromStream(streamed);
 
     if (response.statusCode == 200) {
       final decoded = jsonDecode(utf8.decode(response.bodyBytes));
@@ -100,7 +102,6 @@ class AuthService {
       return null;
     }
   }
-
 
   /// JWT 토큰 저장
   static Future<void> saveToken(String token) async {

@@ -5,7 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:image_picker_web/image_picker_web.dart';
+import 'package:capstone_story_app/services/custom_http_client.dart';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:http_parser/http_parser.dart';
@@ -39,6 +39,8 @@ class _MyPageState extends State<MyPage> {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('jwt_token');
 
+    final client = CustomHttpClient(context);
+
     var request = http.MultipartRequest(
       'POST',
       Uri.parse('$baseUrl/auth/profile-image'),
@@ -49,7 +51,7 @@ class _MyPageState extends State<MyPage> {
       await http.MultipartFile.fromPath('file', imageFile.path),
     );
 
-    final response = await request.send();
+    final response = await client.send(request);
 
     if (response.statusCode == 200) {
       print('✅ 이미지 업로드 성공');
@@ -58,6 +60,7 @@ class _MyPageState extends State<MyPage> {
     }
     await _loadUserData();
   }
+
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -120,6 +123,8 @@ class _MyPageState extends State<MyPage> {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('access_token') ?? prefs.getString('jwt_token');
 
+    final client = CustomHttpClient(context);
+
     final request = http.MultipartRequest(
       'POST',
       Uri.parse('$baseUrl/auth/profile-image'),
@@ -135,7 +140,7 @@ class _MyPageState extends State<MyPage> {
       ),
     );
 
-    final response = await request.send();
+    final response = await client.send(request);
     final responseBody = await response.stream.bytesToString();
 
     if (response.statusCode == 200) {
@@ -146,9 +151,8 @@ class _MyPageState extends State<MyPage> {
     await _loadUserData();
   }
 
-
   Future<void> _loadUserData() async {
-    final userData = await AuthService().fetchUserProfile();
+    final userData = await AuthService().fetchUserProfile(context);
     if (userData != null) {
       setState(() {
         nickname = userData['nickname'];
@@ -172,99 +176,102 @@ class _MyPageState extends State<MyPage> {
   @override
   Widget build(BuildContext context) {
     return CustomLayout(
-      selectedIndex: 2,
-      onItemTapped: (_) {},
+      isHome: false,
       backgroundColor: const Color(0xFFE3FFCD),
-      titleText: null,
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.only(top: 40),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              // 프로필 이미지
-              GestureDetector(
-                onTap: () {
-                  if (kIsWeb) {
-                    _pickImageWeb();
-                  } else {
-                    _pickImage();
-                  }
-                },
-                child: CircleAvatar(
-                  radius: 120,
-                  backgroundImage: _webImageBytes != null
-                      ? MemoryImage(_webImageBytes!)
-                      : (imageUrl != null
-                      ? NetworkImage(
-                      '$baseUrl${imageUrl!}?v=${DateTime.now().millisecondsSinceEpoch}')
-                  as ImageProvider
-                      : const AssetImage('assets/images/profile_sample.png')),
-                ),
-              ),
-
-              const SizedBox(height: 10),
-
-              // 닉네임 / 이름
-              Text(
-                nickname ?? '닉네임 불러오는 중...',
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'HakgyoansimGeurimilgi',
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                name ?? '이름 불러오는 중...',
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontFamily: 'HakgyoansimGeurimilgi',
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              // 수정 버튼 → 옵션 바텀시트 호출
-              ElevatedButton(
-                onPressed: _showEditOptions,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.black,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
+      child: Container(
+        color: const Color(0xFFE3FFCD),
+        width: double.infinity,
+        height: double.infinity,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 40),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                // 프로필 이미지
+                GestureDetector(
+                  onTap: () {
+                    if (kIsWeb) {
+                      _pickImageWeb();
+                    } else {
+                      _pickImage();
+                    }
+                  },
+                  child: CircleAvatar(
+                    radius: 120,
+                    backgroundImage: _webImageBytes != null
+                        ? MemoryImage(_webImageBytes!)
+                        : (imageUrl != null
+                        ? NetworkImage(
+                        '$baseUrl${imageUrl!}?v=${DateTime.now().millisecondsSinceEpoch}')
+                    as ImageProvider
+                        : const AssetImage('assets/images/profile_sample.png')),
                   ),
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
                 ),
-                child: const Text(
-                  '수정',
-                  style: TextStyle(
+
+                const SizedBox(height: 10),
+
+                // 닉네임 / 이름
+                Text(
+                  nickname ?? '닉네임 불러오는 중...',
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'HakgyoansimGeurimilgi',
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  name ?? '이름 불러오는 중...',
+                  style: const TextStyle(
                     fontSize: 24,
                     fontFamily: 'HakgyoansimGeurimilgi',
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 30),
-              _buildMenuButton('비밀번호 변경', () {}),
-              _buildMenuButton('앱 설정', () {}),
-              const SizedBox(height: 12),
+                const SizedBox(height: 12),
 
-              Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildOutlinedButton('로그아웃', _logout,
-                        width: 165, height: 50),
-                    const SizedBox(width: 12),
-                    _buildOutlinedButton('탈퇴', _logout,
-                        width: 165, height: 50),
-                  ],
+                // 수정 버튼 → 옵션 바텀시트 호출
+                ElevatedButton(
+                  onPressed: _showEditOptions,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    padding:
+                    const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                  ),
+                  child: const Text(
+                    '수정',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontFamily: 'HakgyoansimGeurimilgi',
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 40),
-            ],
+
+                const SizedBox(height: 30),
+                _buildMenuButton('비밀번호 변경', () {}),
+                _buildMenuButton('앱 설정', () {}),
+                const SizedBox(height: 12),
+
+                Center(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildOutlinedButton('로그아웃', _logout,
+                          width: 165, height: 50),
+                      const SizedBox(width: 12),
+                      _buildOutlinedButton('탈퇴', _logout,
+                          width: 165, height: 50),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 40),
+              ],
+            ),
           ),
         ),
       ),
@@ -308,12 +315,13 @@ class _MyPageState extends State<MyPage> {
   Future<void> deleteProfileImage() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('access_token') ?? prefs.getString('jwt_token');
-    final response = await http.delete(
-      Uri.parse('$baseUrl/auth/profile-image'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
-    );
+
+    final client = CustomHttpClient(context);
+    final request = http.Request('DELETE', Uri.parse('$baseUrl/auth/profile-image'));
+    request.headers['Authorization'] = 'Bearer $token';
+
+    final response = await client.send(request);
+    final body = await response.stream.bytesToString();
 
     if (response.statusCode == 200) {
       print('🗑️ 프로필 사진 삭제 성공');

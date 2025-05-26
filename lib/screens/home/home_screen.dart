@@ -18,6 +18,8 @@ import 'package:capstone_story_app/screens/home/news_screen.dart';
 import 'package:capstone_story_app/screens/userstore/other_user_store_screen.dart';
 import 'package:capstone_story_app/utils/audio_utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:capstone_story_app/screens/health/health_screen.dart';
+
 
 import '../auth/login_page.dart';
 
@@ -426,9 +428,17 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                               Expanded(
                                 child: _buildGridButton(
-                                    'assets/images/health.svg',
-                                    "건강",
-                                        () {}),
+                                  'assets/images/health.svg',
+                                  "건강",
+                                      () {
+                                    if (_isCountdown) return;
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (_) => const HealthScreen()),
+                                    );
+                                  },
+                                ),
+
                               ),
                             ],
                           ),

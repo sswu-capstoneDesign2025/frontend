@@ -9,10 +9,10 @@ import 'package:capstone_story_app/services/auth_service.dart';
 import 'package:capstone_story_app/screens/auth/kakao_extra_info_page.dart';
 import 'package:capstone_story_app/screens/home/home_screen.dart';
 import 'package:capstone_story_app/screens/root_decider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class KakaoAuthService {
-  static const String _baseUrl = "http://192.168.0.18:8000";
-
+  static final String _baseUrl = dotenv.env['API_BASE_URL'] ?? "http://localhost:8000";
   static void _disableLinkStream() {
     RootDeciderState.setLinkListening(false);
   }

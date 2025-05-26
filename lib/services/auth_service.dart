@@ -4,12 +4,14 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter/material.dart';
+import 'package:capstone_story_app/services/custom_http_client.dart';
 
 class AuthService {
   static final String baseUrl = dotenv.env['API_BASE_URL']!;
 
   /// 일반 로그인
-  static Future<String?> loginWithUsernamePassword({
+  static Future<void> loginWithUsernamePassword({
     required String username,
     required String password,
   }) async {
@@ -24,7 +26,10 @@ class AuthService {
 
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body);
-      return json["access_token"];
+      final token = json["access_token"];
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('jwt_token', token);
+      await prefs.setBool('is_logged_in', true);
     } else {
       throw Exception("로그인 실패: ${response.body}");
     }
@@ -75,6 +80,28 @@ class AuthService {
     }
   }
 
+  /// 사용자 정보 받아오기
+  Future<Map<String, dynamic>?> fetchUserProfile(BuildContext context) async {
+    final client = CustomHttpClient(context);
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('access_token') ?? prefs.getString('jwt_token');
+
+    if (token == null) return null;
+
+    final request = http.Request('GET', Uri.parse('$baseUrl/auth/me'));
+    request.headers['Authorization'] = 'Bearer $token';
+
+    final streamed = await client.send(request);
+    final response = await http.Response.fromStream(streamed);
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+      return decoded;
+    } else {
+      print('❌ 사용자 정보 조회 실패: ${response.body}');
+      return null;
+    }
+  }
 
   /// JWT 토큰 저장
   static Future<void> saveToken(String token) async {
@@ -92,5 +119,6 @@ class AuthService {
   static Future<void> clearToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('jwt_token');
+    await prefs.setBool('is_logged_in', false);
   }
 }

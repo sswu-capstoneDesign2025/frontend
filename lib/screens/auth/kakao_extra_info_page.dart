@@ -8,6 +8,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:capstone_story_app/services/auth_service.dart';
 import 'package:capstone_story_app/screens/home/home_screen.dart';
 
+import '../root_decider.dart';
+
 
 class KakaoExtraInfoPage extends StatefulWidget {
   final String kakaoId;
@@ -61,7 +63,7 @@ class _KakaoExtraInfoPageState extends State<KakaoExtraInfoPage> {
         await AuthService.saveToken(token);
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          MaterialPageRoute(builder: (_) => const RootDecider()),
         );
       } else {
         print("오류 발생: ${response.body}");

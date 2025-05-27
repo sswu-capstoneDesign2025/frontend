@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class UserStoreDetail extends StatelessWidget {
   final String date;
@@ -11,6 +12,17 @@ class UserStoreDetail extends StatelessWidget {
     required this.title,
     required this.content,
   });
+
+  String formatDate(String rawDate) {
+    try {
+      DateTime parsedDate =
+          DateTime.parse(rawDate); // "2025-05-11T08:30:00" 형식이어야 함
+      return DateFormat('yyyy-MM-dd일 hh:mm a')
+          .format(parsedDate); // "2025-05-11일 08:30 AM"
+    } catch (e) {
+      return rawDate; // 파싱 실패 시 원본 반환
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,12 +38,10 @@ class UserStoreDetail extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              date,
+              formatDate(date),
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-
-            // 요약 내용 카드
             const Text(
               '요약 내용',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -50,10 +60,7 @@ class UserStoreDetail extends StatelessWidget {
                 style: const TextStyle(fontSize: 15),
               ),
             ),
-
             const SizedBox(height: 24),
-
-            // 전체 내용 카드
             const Text(
               '전체 내용',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),

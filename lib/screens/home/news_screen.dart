@@ -9,9 +9,9 @@ import 'package:capstone_story_app/screens/home/home_screen.dart';
 import 'package:capstone_story_app/screens/userstore/other_user_store_screen.dart';
 
 class NewsScreen extends StatefulWidget {
-  final String inputText;
+  final String? inputText;
 
-  const NewsScreen({super.key, required this.inputText});
+  const NewsScreen({super.key, this.inputText});
 
   @override
   State<NewsScreen> createState() => _NewsScreenState();
@@ -25,34 +25,41 @@ class _NewsScreenState extends State<NewsScreen> {
   @override
   void initState() {
     super.initState();
-    loadNewsFromAPI();
+    if (widget.inputText != null) {
+      loadNewsFromAPI();
+    } else {
+      isLoading = false;
+    }
   }
 
   Future<void> loadNewsFromAPI() async {
-    try {
-      final result = await fetchNewsFromText(widget.inputText);
+  try {
+    final result = await fetchNewsFromText(widget.inputText!);
+    print('💬 결과 왔다! $result');
 
-      final summaries = result['summaries'] as List<dynamic>;
-      final combinedSummary = result['combined_summary'] as String;
+    final summaries = result['summaries'] as List<dynamic>;
+    print('📦 summaries 개수: ${summaries.length}');
 
-      setState(() {
-        newsList = summaries
-            .map((e) => News(
-                  title: e['title'] ?? e['url'] ?? '',
-                  content: e['summary'] ?? '',
-                  url: e['url'] ?? '',
-                ))
-            .toList();
-        combinedNewsSummary = combinedSummary;
-        isLoading = false;
-      });
-    } catch (e) {
-      print('에러 발생: $e');
-      setState(() {
-        isLoading = false;
-      });
-    }
+    setState(() {
+      newsList = summaries.map((e) => News(
+        title: e['title'] ?? e['url'] ?? '',
+        content: e['summary'] ?? '',
+        url: e['url'] ?? '',
+      )).toList();
+
+      combinedNewsSummary = result['combined_summary'] ?? '';
+      isLoading = false;
+    });
+
+    print('✅ 뉴스 리스트 변환 완료. 총 ${newsList.length}개');
+  } catch (e) {
+    print('❌ 에러 발생: $e');
+    setState(() {
+      isLoading = false;
+    });
   }
+}
+
 
   void _onItemTapped(int index) {
     if (index == 1) {
@@ -85,7 +92,7 @@ class _NewsScreenState extends State<NewsScreen> {
                   const Padding(
                     padding: EdgeInsets.only(left: 17),
                     child: Text(
-                      "🔍관련 뉴스 모음",
+                      "관련 뉴스 모음",
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,

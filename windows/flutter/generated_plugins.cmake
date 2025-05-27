@@ -4,7 +4,11 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   app_links
+  audioplayers_windows
   desktop_webview_window
+  file_selector_windows
+  geolocator_windows
+  record_windows
   url_launcher_windows
   window_to_front
 )

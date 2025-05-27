@@ -1,3 +1,5 @@
+// lib/screens/auth/login_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:capstone_story_app/screens/auth/username_login_page.dart';
@@ -5,6 +7,9 @@ import 'package:capstone_story_app/services/kakao_auth_service.dart';
 import 'package:capstone_story_app/services/naver_auth_service.dart';
 import 'package:capstone_story_app/screens/home/home_screen.dart';
 import 'package:capstone_story_app/services/auth_service.dart';
+import 'package:capstone_story_app/screens/auth/signup_page.dart';
+
+import '../root_decider.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -31,9 +36,10 @@ class LoginPage extends StatelessWidget {
         label: Text(
           label,
           style: TextStyle(
-            fontSize: 18,
+            fontSize: 24,
             fontWeight: FontWeight.bold,
             color: labelColor,
+            fontFamily: 'HakgyoansimGeurimilgi',
           ),
         ),
         onPressed: onPressed,
@@ -58,13 +64,12 @@ class LoginPage extends StatelessWidget {
                 width: 180,
                 height: 180,
               ),
-              const SizedBox(height: 1),
 
               const Text(
                 '나의 소중한 친구',
                 style: TextStyle(
                   fontFamily: 'HakgyoansimGeurimilgi',
-                  fontSize: 20,
+                  fontSize: 28,
                   color: Color(0xFF78CF97),
                 ),
               ),
@@ -74,7 +79,7 @@ class LoginPage extends StatelessWidget {
                 '말벗',
                 style: TextStyle(
                   fontFamily: 'BaedalJua',
-                  fontSize: 28,
+                  fontSize: 40,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF3C7D52),
                 ),
@@ -84,7 +89,7 @@ class LoginPage extends StatelessWidget {
               // 일반 로그인
               _buildLoginButton(
                 color: const Color(0xFF78CF97),
-                icon: const Icon(Icons.eco, color: Colors.white),
+                icon: const Icon(Icons.eco, color: Colors.white,  size: 30),
                 label: '일반 로그인',
                 labelColor: Colors.white,
                 onPressed: () {
@@ -101,8 +106,8 @@ class LoginPage extends StatelessWidget {
                 color: const Color(0xFF03C75A),
                 icon: Image.asset(
                   'assets/images/naver.png',
-                  width: 24,
-                  height: 24,
+                  width: 34,
+                  height: 34,
                 ),
                 label: '네이버 로그인',
                 labelColor: Colors.white,
@@ -113,7 +118,7 @@ class LoginPage extends StatelessWidget {
                       await AuthService.saveToken(token);
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (_) => const HomeScreen()),
+                        MaterialPageRoute(builder: (_) => const RootDecider()),
                       );
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -132,13 +137,12 @@ class LoginPage extends StatelessWidget {
                 color: const Color(0xFFFEE500),
                 icon: SvgPicture.asset(
                   'assets/images/KakaoTalk_logo.svg',
-                  width: 24,
-                  height: 24,
+                  width: 34,
+                  height: 34,
                 ),
                 label: '카카오 로그인',
-                labelColor: Color(0xFF3C1E1E),
+                labelColor: const Color(0xFF3C1E1E),
                 onPressed: () {
-                  // 외부 브라우저로 로그인 URL 열기
                   KakaoAuthService.loginWithKakao(context);
                 },
               ),
@@ -147,17 +151,23 @@ class LoginPage extends StatelessWidget {
               // 회원가입
               GestureDetector(
                 onTap: () {
-                  // TODO: Navigator.push to SignUpPage
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SignUpPage()),
+                  );
                 },
                 child: const Text(
                   '회원가입',
                   style: TextStyle(
                     decoration: TextDecoration.underline,
+                    decorationColor: Color(0xFF3C7D52),
                     color: Color(0xFF3C7D52),
+                    fontSize: 22,
+                    fontFamily: 'HakgyoansimGeurimilgi',
                   ),
                 ),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 60),
             ],
           ),
         ),

@@ -3,7 +3,10 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:capstone_story_app/screens/root_decider.dart';
 import 'package:capstone_story_app/screens/home/home_screen.dart';
+import 'package:capstone_story_app/screens/userstore/user_store.dart';
+import 'package:capstone_story_app/screens/userstore/other_user_store_screen.dart';
 import 'package:capstone_story_app/screens/home/news_screen.dart';
+
 
 
 void main() async {
@@ -29,7 +32,7 @@ class MyApp extends StatelessWidget {
       ),
       home: const HomeScreen(),  // ✅ 초기화면을 HomeScreen으로
       routes: {
-        '/home': (_) => const HomeScreen(), // ✅ 안전하게 유지
+         '/home': (_) => const HomeScreen(),
       },
     );
   }

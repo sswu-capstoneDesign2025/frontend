@@ -7,7 +7,6 @@ import 'package:capstone_story_app/widgets/custom_layout.dart';
 import 'package:capstone_story_app/screens/userstore/user_store_detail.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:capstone_story_app/screens/home/news_screen.dart';
-
 import '../../services/custom_http_client.dart';
 
 class OtherUserStoreScreen extends StatefulWidget {
@@ -144,6 +143,7 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
   }
 
   Widget _buildFilterChip(String label, {required bool isSelected}) {
+    final screenWidth = MediaQuery.of(context).size.width;
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -159,14 +159,14 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected ? const Color(0x5E446F24) : Colors.white,
-          border: Border.all(color: const Color(0xFF446F24), width: 1.5),
-          borderRadius: BorderRadius.circular(13),
+          border: Border.all(color: const Color(0xFF446F24), width: 2),
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Text(
           label,
           style: TextStyle(
             fontFamily: 'HakgyoansimGeurimilgi',
-            fontSize: 20,
+            fontSize: (screenWidth * 0.07).clamp(16.0, 25.0),
             color: Colors.black,
             fontWeight: FontWeight.w600,
           ),
@@ -176,12 +176,14 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
   }
 
   Widget _buildFilterArea() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(
-          minWidth: 332,
-          maxHeight: 260, // 고정 높이
+        constraints: BoxConstraints(
+          minWidth: screenWidth * 0.8,
+          maxHeight: (screenHeight * 0.35).clamp(200.0, 350.0),
         ),
         child: Container(
           width: double.infinity,
@@ -190,7 +192,7 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: const Color(0xFF446F24),
-              width: 1.5,
+              width: 2,
             ),
           ),
           padding: const EdgeInsets.all(12),
@@ -213,48 +215,95 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
                 ),
                 const SizedBox(height: 8),
                 if (selectedCategory == '날짜')
-                  Center(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFB5E1B5),
-                        foregroundColor: Colors.green[900],
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                    child: Center(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFB5E1B5),
+                          foregroundColor: const Color(0xFF446F24),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(40),
+                          ),
                         ),
-                      ),
-                      onPressed: () => _selectDateRange(context),
-                      child: Text(
-                        selectedDateRange == null
-                            ? '날짜 선택'
-                            : '${DateFormat('yyyy-MM-dd').format(selectedDateRange!.start)} ~ ${DateFormat('yyyy-MM-dd').format(selectedDateRange!.end)}',
-                        style: const TextStyle(
+                        onPressed: () => _selectDateRange(context),
+                        child: Text(
+                          selectedDateRange == null
+                              ? '날짜 선택'
+                              : '${DateFormat('yyyy-MM-dd').format(selectedDateRange!.start)} ~ ${DateFormat('yyyy-MM-dd').format(selectedDateRange!.end)}',
+                          style: TextStyle(
                             fontFamily: 'HakgyoansimGeurimilgi',
-                            fontWeight: FontWeight.bold),
+                            fontSize: (screenWidth * 0.05).clamp(14.0, 24.0),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 if (selectedCategory == '지역')
                   SizedBox(
-                    height: 130, // 칩 높이 48 + 간격 고려
+                    height: (screenWidth * 0.25).clamp(120.0, 200.0),
                     child: GridView.count(
                       crossAxisCount: 4,
-                      childAspectRatio: 2.5, // 칩 너비/높이 비율 조정
-                      physics: const NeverScrollableScrollPhysics(), // 스크롤 금지
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 8, horizontal: 8),
+                      childAspectRatio: 1.6,
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                       mainAxisSpacing: 8,
                       crossAxisSpacing: 8,
                       children: regions.map((region) {
                         final bool isSelected = selectedRegion == region;
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              selectedRegion = region;
+                            });
+                            applyFilters();
+                          },
+                          child: Container(
+                            alignment: Alignment.center, // 텍스트 중앙 정렬
+                            decoration: BoxDecoration(
+                              color: isSelected ? const Color(0x5E446F24) : Colors.white,
+                              borderRadius: BorderRadius.circular(15),
+                              border: Border.all(
+                                color: const Color(0xFF446F24),
+                                width: 2,
+                              ),
+                            ),
+                            child: Text(
+                              region,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontFamily: 'HakgyoansimGeurimilgi',
+                                fontWeight: FontWeight.w600,
+                                fontSize: (screenWidth * 0.06).clamp(14.0, 24.0),
+                                color: Colors.black,
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                if (selectedCategory == '주제')
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8), // ✅ 여기로 이동
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      alignment: WrapAlignment.center,
+                      children: topics.map((topic) {
+                        final bool isSelected = selectedTopic == topic;
                         return ChoiceChip(
+                          showCheckmark: false,
+                          avatar: null,
+                          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
                           label: Text(
-                            region,
-                            style: const TextStyle(
+                            topic,
+                            style: TextStyle(
                               fontFamily: 'HakgyoansimGeurimilgi',
                               fontWeight: FontWeight.w600,
-                              fontSize: 17,
+                              fontSize: (screenWidth * 0.06).clamp(14.0, 24.0),
                               color: Colors.black,
                             ),
                           ),
@@ -262,62 +311,21 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
                           selectedColor: const Color(0x5E446F24),
                           backgroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            side: const BorderSide(
-                              color: Color(0xFF446F24),
-                              width: 1.5,
+                            borderRadius: BorderRadius.circular(20),
+                            side: BorderSide(
+                              color: const Color(0xFF446F24),
+                              width: 2,
                             ),
                           ),
                           onSelected: (_) {
                             setState(() {
-                              selectedRegion = region;
+                              selectedTopic = topic;
                             });
                             applyFilters();
                           },
                         );
                       }).toList(),
                     ),
-                  ),
-                if (selectedCategory == '주제')
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    alignment: WrapAlignment.center,
-                    children: topics.map((topic) {
-                      final bool isSelected =
-                          selectedTopic == topic; // ✅ 선택 여부 저장
-                      return ChoiceChip(
-                        label: Text(
-                          topic,
-                          style: TextStyle(
-                            fontFamily: 'HakgyoansimGeurimilgi',
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600, // ✅ 글자 두께 추가
-                            color: isSelected
-                                ? Colors.black
-                                : Colors.black, // ✅ 글자색
-                          ),
-                        ),
-                        selected: isSelected,
-                        selectedColor: const Color(0x5E446F24), // ✅ 선택된 배경색
-                        backgroundColor: Colors.white, // ✅ 비선택 배경
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(
-                            color: isSelected
-                                ? const Color(0xFF446F24)
-                                : const Color(0xFF446F24),
-                            width: 1.5,
-                          ),
-                        ),
-                        onSelected: (_) {
-                          setState(() {
-                            selectedTopic = topic;
-                          });
-                          applyFilters();
-                        },
-                      );
-                    }).toList(),
                   ),
               ],
             ),
@@ -328,6 +336,8 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
   }
 
   Widget _buildSortRow() {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Row(
@@ -344,7 +354,7 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
               '• 랜덤순  ',
               style: TextStyle(
                 fontFamily: 'HakgyoansimGeurimilgi',
-                fontSize: 20,
+                fontSize: (screenWidth * 0.045).clamp(14.0, 18.0),
                 fontWeight:
                     sortOrder == '랜덤순' ? FontWeight.bold : FontWeight.normal,
                 color: sortOrder == '랜덤순' ? Colors.green[900] : Colors.black,
@@ -362,7 +372,7 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
               '• 최신순',
               style: TextStyle(
                 fontFamily: 'HakgyoansimGeurimilgi',
-                fontSize: 20,
+                fontSize: (screenWidth * 0.045).clamp(14.0, 18.0),
                 fontWeight:
                     sortOrder == '최신순' ? FontWeight.bold : FontWeight.normal,
                 color: sortOrder == '최신순' ? Colors.green[900] : Colors.black,
@@ -375,6 +385,7 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
   }
 
   Widget _buildRecordCard(Map record) {
+    final screenWidth = MediaQuery.of(context).size.width;
     final profileUrl = (record['profileUrl'] ?? '').isNotEmpty
         ? record['profileUrl']
         : defaultProfileUrl;
@@ -388,8 +399,7 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
           border: Border.all(color: const Color(0xFF446F24), width: 2.0),
         ),
         child: ListTile(
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           onTap: () {
             Navigator.push(
               context,
@@ -407,10 +417,10 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.grey.withOpacity(0.4), // 그림자 색상 및 투명도
+                  color: Colors.grey.withOpacity(0.4),
                   spreadRadius: 1,
                   blurRadius: 4,
-                  offset: Offset(0, 2), // 그림자 방향
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
@@ -424,15 +434,18 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
           ),
           title: Text(
             record['author'] ?? '',
-            style: const TextStyle(
-                fontFamily: 'HakgyoansimGeurimilgi',
-                fontWeight: FontWeight.bold,
-                fontSize: 20),
+            style: TextStyle(
+              fontFamily: 'HakgyoansimGeurimilgi',
+              fontWeight: FontWeight.bold,
+              fontSize: screenWidth * 0.05,
+            ),
           ),
           subtitle: Text(
             record['title'] ?? '',
-            style: const TextStyle(
-                fontFamily: 'HakgyoansimGeurimilgi', fontSize: 20),
+            style: TextStyle(
+              fontFamily: 'HakgyoansimGeurimilgi',
+              fontSize: screenWidth * 0.045,
+            ),
           ),
           trailing: const Icon(Icons.volume_up_rounded),
         ),
@@ -464,22 +477,37 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
     return CustomLayout(
       isHome: false,
-      child: Column(
-        children: [
-          _buildFilterArea(),
-          _buildSortRow(),
-          Expanded(
-            child: filteredRecords.isEmpty
-                ? const Center(child: Text('결과 없음'))
-                : ListView.builder(
-              itemCount: filteredRecords.length,
-              itemBuilder: (context, index) =>
-                  _buildRecordCard(filteredRecords[index]),
+      child: Container(
+        color: Colors.white,
+        width: double.infinity,
+        height: double.infinity,
+        child: Column(
+          children: [
+            _buildFilterArea(),
+            _buildSortRow(),
+            Expanded(
+              child: filteredRecords.isEmpty
+                  ? Center(
+                child: Text(
+                  '결과 없음',
+                  style: TextStyle(
+                    fontFamily: 'HakgyoansimGeurimilgi',
+                    fontWeight: FontWeight.w500,
+                    fontSize: (screenWidth * 0.05).clamp(16.0, 22.0),
+                  )
+                ),
+              )
+                  : ListView.builder(
+                itemCount: filteredRecords.length,
+                itemBuilder: (context, index) =>
+                    _buildRecordCard(filteredRecords[index]),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -175,6 +175,11 @@ class _MyPageState extends State<MyPage> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final profileRadius = screenWidth * 0.3;
+    final buttonWidth = screenWidth * 0.85;
+
     return CustomLayout(
       isHome: false,
       backgroundColor: const Color(0xFFE3FFCD),
@@ -184,38 +189,29 @@ class _MyPageState extends State<MyPage> {
         height: double.infinity,
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.only(top: 40),
+            padding: const EdgeInsets.only(top: 10),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 // 프로필 이미지
                 GestureDetector(
-                  onTap: () {
-                    if (kIsWeb) {
-                      _pickImageWeb();
-                    } else {
-                      _pickImage();
-                    }
-                  },
+                  onTap: () => kIsWeb ? _pickImageWeb() : _pickImage(),
                   child: CircleAvatar(
-                    radius: 120,
+                    radius: profileRadius,
                     backgroundImage: _webImageBytes != null
                         ? MemoryImage(_webImageBytes!)
                         : (imageUrl != null
-                        ? NetworkImage(
-                        '$baseUrl${imageUrl!}?v=${DateTime.now().millisecondsSinceEpoch}')
-                    as ImageProvider
-                        : const AssetImage('assets/images/profile_sample.png')),
+                        ? NetworkImage('$baseUrl${imageUrl!}?v=${DateTime.now().millisecondsSinceEpoch}')
+                        : const AssetImage('assets/images/profile_sample.png')) as ImageProvider,
                   ),
                 ),
-
                 const SizedBox(height: 10),
 
                 // 닉네임 / 이름
                 Text(
                   nickname ?? '닉네임 불러오는 중...',
-                  style: const TextStyle(
-                    fontSize: 28,
+                  style: TextStyle(
+                    fontSize: screenWidth * 0.07,
                     fontWeight: FontWeight.bold,
                     fontFamily: 'HakgyoansimGeurimilgi',
                   ),
@@ -223,15 +219,14 @@ class _MyPageState extends State<MyPage> {
                 const SizedBox(height: 4),
                 Text(
                   name ?? '이름 불러오는 중...',
-                  style: const TextStyle(
-                    fontSize: 24,
+                  style: TextStyle(
+                    fontSize: screenWidth * 0.065,
                     fontFamily: 'HakgyoansimGeurimilgi',
                   ),
                 ),
+                const SizedBox(height: 8),
 
-                const SizedBox(height: 12),
-
-                // 수정 버튼 → 옵션 바텀시트 호출
+                // 수정 버튼
                 ElevatedButton(
                   onPressed: _showEditOptions,
                   style: ElevatedButton.styleFrom(
@@ -240,34 +235,28 @@ class _MyPageState extends State<MyPage> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    padding:
-                    const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 6),
                   ),
-                  child: const Text(
+                  child: Text(
                     '수정',
                     style: TextStyle(
-                      fontSize: 24,
+                      fontSize: screenWidth * 0.06,
                       fontFamily: 'HakgyoansimGeurimilgi',
                     ),
                   ),
                 ),
 
                 const SizedBox(height: 30),
-                _buildMenuButton('비밀번호 변경', () {}),
-                _buildMenuButton('앱 설정', () {}),
+                _buildMenuButton('비밀번호 변경', () {}, buttonWidth),
+                _buildMenuButton('앱 설정', () {}, buttonWidth),
                 const SizedBox(height: 12),
-
-                Center(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildOutlinedButton('로그아웃', _logout,
-                          width: 165, height: 50),
-                      const SizedBox(width: 12),
-                      _buildOutlinedButton('탈퇴', _logout,
-                          width: 165, height: 50),
-                    ],
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildOutlinedButton('로그아웃', _logout, width: buttonWidth * 0.48),
+                    const SizedBox(width: 12),
+                    _buildOutlinedButton('탈퇴', _logout, width: buttonWidth * 0.48),
+                  ],
                 ),
                 const SizedBox(height: 40),
               ],
@@ -331,18 +320,17 @@ class _MyPageState extends State<MyPage> {
     await _loadUserData(); // 삭제 후 UI 갱신
   }
 
-  Widget _buildMenuButton(String text, VoidCallback onPressed) {
+  Widget _buildMenuButton(String text, VoidCallback onPressed, double width) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: SizedBox(
-        width: 350,
+        width: width,
         height: 60,
         child: ElevatedButton(
           onPressed: onPressed,
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.white,
             foregroundColor: Colors.black,
-            padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
@@ -350,7 +338,7 @@ class _MyPageState extends State<MyPage> {
           child: Text(
             text,
             style: const TextStyle(
-              fontSize: 27,
+              fontSize: 24,
               fontFamily: 'HakgyoansimGeurimilgi',
             ),
           ),
@@ -362,30 +350,40 @@ class _MyPageState extends State<MyPage> {
   Widget _buildOutlinedButton(
       String text,
       VoidCallback onPressed, {
-        double width = double.infinity,
-        double height = 60,
+        double? width,
+        double? height,
       }) {
-    return SizedBox(
-      width: width,
-      height: height,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenWidth = MediaQuery.of(context).size.width;
+
+        final effectiveWidth = width ?? screenWidth * 0.45; // 기본 45%
+        final effectiveHeight = height ?? screenWidth * 0.13; // 기본 높이 비율
+        final fontSize = (screenWidth * 0.05).clamp(14.0, 22.0); // 글씨 크기 비율 + 최대/최소 제한
+
+        return SizedBox(
+          width: effectiveWidth,
+          height: effectiveHeight,
+          child: ElevatedButton(
+            onPressed: onPressed,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              elevation: 2,
+            ),
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: fontSize,
+                fontFamily: 'HakgyoansimGeurimilgi',
+              ),
+            ),
           ),
-          elevation: 2,
-        ),
-        child: Text(
-          text,
-          style: const TextStyle(
-            fontSize: 24,
-            fontFamily: 'HakgyoansimGeurimilgi',
-          ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

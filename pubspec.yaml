@@ -29,6 +29,8 @@ dependencies:
   web: ^1.1.1
   file_picker: ^10.1.9
   intl: ^0.18.0
+  geolocator: ^14.0.1
+  geocoding: ^3.0.0
 
 dev_dependencies:
   flutter_test:

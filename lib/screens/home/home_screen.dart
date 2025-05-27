@@ -19,6 +19,7 @@ import 'package:capstone_story_app/screens/userstore/other_user_store_screen.dar
 import 'package:capstone_story_app/utils/audio_utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:capstone_story_app/screens/health/health_screen.dart';
+import 'package:capstone_story_app/screens/home/weather_screen.dart';
 
 
 import '../auth/login_page.dart';
@@ -98,7 +99,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     if (_isRecording) {
-      print('🛑 녹음 중단 시도');
       _dotTimer?.cancel();
       _activeDot = 0;
       setState(() => _isRecording = false); // 먼저 false 처리
@@ -230,7 +230,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // 로그인된 사용자 이름 추가도 가능
     final prefs = await SharedPreferences.getInstance();
-    final username = prefs.getString('username'); // 저장되어 있다고 가정
+    final username = prefs.getString('username');
     if (username != null) req.fields['username'] = username;
 
     final res = await req.send();
@@ -316,154 +316,184 @@ class _HomeScreenState extends State<HomeScreen> {
         color: const Color(0xFFE3FFCD),
         width: double.infinity,
         height: double.infinity,
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 15),
-              // 녹음 버튼 + 점
-              Stack(
-                clipBehavior: Clip.none,
-                alignment: Alignment.center,
-                children: [
-                  //ui 밀림 방지 공간
-                  const SizedBox(height: 30),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final boxWidth = constraints.maxWidth * 0.8;
+            final boxHeight = constraints.maxHeight * 0.37;
 
-                  // 실제 점 표시
-                  if (_isRecording)
-                    Positioned(
-                      top: -30,
-                      child: _buildRecordingDots(),
-                    ),
-
-                  GestureDetector(
-                    onTap: _toggleVoiceInteraction,
-                    child: Stack(
-                      alignment: Alignment.center,
+            return SingleChildScrollView(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: IntrinsicHeight(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Container(
-                          width: 290,
-                          height: 290,
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Color(0xFF78CF97),
-                          ),
-                        ),
-                        if (_isRecording)
-                          const SpinKitThreeBounce(
-                            color: Colors.white,
-                            size: 30,
-                          ),
-                        Image.asset(
-                          'assets/images/baru.png',
-                          width: 290,
-                          height: 290,
-                        ),
-                        if (_countdown != null) ...[
-                          Container(
-                            width: 290,
-                            height: 290,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.black.withOpacity(0.6),
-                            ),
-                          ),
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 300),
-                            child: Text(
-                              '$_countdown',
-                              key: ValueKey(_countdown),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 80,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'HakgyoansimGeurimilgi',
+                        const SizedBox(height: 20),
+
+                        /// 녹음 버튼
+                        Center(
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            alignment: Alignment.center,
+                            children: [
+                              const SizedBox(height: 30),
+                              if (_isRecording)
+                                Positioned(
+                                  top: -30,
+                                  child: _buildRecordingDots(),
+                                ),
+                              GestureDetector(
+                                onTap: _toggleVoiceInteraction,
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    Container(
+                                      width: 300,
+                                      height: 300,
+                                      decoration: const BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: Color(0xFF78CF97),
+                                      ),
+                                    ),
+                                    if (_isRecording)
+                                      const SpinKitThreeBounce(
+                                        color: Colors.white,
+                                        size: 30,
+                                      ),
+                                    Image.asset(
+                                      'assets/images/baru.png',
+                                      width: 290,
+                                      height: 290,
+                                    ),
+                                    if (_countdown != null) ...[
+                                      Container(
+                                        width: 300,
+                                        height: 300,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: Colors.black.withOpacity(0.6),
+                                        ),
+                                      ),
+                                      AnimatedSwitcher(
+                                        duration: const Duration(milliseconds: 300),
+                                        child: Text(
+                                          '$_countdown',
+                                          key: ValueKey(_countdown),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 80,
+                                            fontWeight: FontWeight.bold,
+                                            fontFamily: 'HakgyoansimGeurimilgi',
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
                               ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 50),
+
+                        /// 버튼 박스
+                        Center(
+                          child: Container(
+                            width: boxWidth,
+                            height: boxHeight,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Stack(
+                              children: [
+                                Column(
+                                  children: [
+                                    Expanded(
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            child: _buildGridButton(
+                                                Icons.article, "뉴스", () => _onItemTapped(0)),
+                                          ),
+                                          Expanded(
+                                            child: _buildGridButton(
+                                                Icons.groups, "수다", () => _onItemTapped(2)),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Row(
+                                        children: [
+
+                                          Expanded(
+                                            child: _buildGridButton(
+                                              'assets/images/weather.svg',
+                                              "날씨",
+                                                  () {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) => const TodayWeatherScreen(),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                          Expanded(
+                                            child: _buildGridButton(
+                                                'assets/images/health.svg', "건강", () {
+                                              if (_isCountdown) return;
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (_) => const HealthScreen(),
+                                                ),
+                                              );
+                                            }),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Align(
+                                  alignment: Alignment.center,
+                                  child: Container(
+                                    width: 2,
+                                    height: boxHeight * 0.75,
+                                    color: Colors.grey[300],
+                                  ),
+                                ),
+                                Align(
+                                  alignment: Alignment.center,
+                                  child: Container(
+                                    width: boxWidth * 0.75,
+                                    height: 2,
+                                    color: Colors.grey[300],
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
+                        ),
+
+                        const SizedBox(height: 40),
                       ],
                     ),
                   ),
-                ],
-              ),
-
-
-              const SizedBox(height: 60),
-
-              // 📦 흰색 버튼 박스
-              Container(
-                width: 400,
-                height: 280,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Stack(
-                  children: [
-                    Column(
-                      children: [
-                        Expanded(
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: _buildGridButton(
-                                    Icons.article, "뉴스", () => _onItemTapped(0)),
-                              ),
-                              Expanded(
-                                child: _buildGridButton(
-                                    Icons.groups, "수다", () => _onItemTapped(2)),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Expanded(
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: _buildGridButton(
-                                    'assets/images/weather.svg',
-                                    "날씨",
-                                        () {}),
-                              ),
-                              Expanded(
-                                child: _buildGridButton(
-                                  'assets/images/health.svg',
-                                  "건강",
-                                      () {
-                                    if (_isCountdown) return;
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(builder: (_) => const HealthScreen()),
-                                    );
-                                  },
-                                ),
-
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    Align(
-                      alignment: Alignment.center,
-                      child:
-                      Container(width: 2, height: 200, color: Colors.grey[300]),
-                    ),
-                    Align(
-                      alignment: Alignment.center,
-                      child:
-                      Container(width: 300, height: 2, color: Colors.grey[300]),
-                    ),
-                  ],
                 ),
               ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
   }
+
 
   Widget _buildGridButton(dynamic iconOrPath, String label, VoidCallback onTap) {
     return InkWell(
@@ -475,7 +505,11 @@ class _HomeScreenState extends State<HomeScreen> {
               ? SvgPicture.asset(iconOrPath, width: 60, height: 60)
               : Icon(iconOrPath, size: 60),
           const SizedBox(height: 4),
-          Text(label, style: const TextStyle(fontSize: 24)),
+          Text(label, style: const TextStyle(
+              fontSize: 28,
+              fontFamily: 'HakgyoansimGeurimilgi',
+              fontWeight: FontWeight.bold,
+          )),
         ],
       ),
     );

@@ -8,6 +8,7 @@ import 'package:capstone_story_app/screens/userstore/user_store_detail.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:capstone_story_app/screens/home/news_screen.dart';
 import '../../services/custom_http_client.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class OtherUserStoreScreen extends StatefulWidget {
   const OtherUserStoreScreen({super.key});
@@ -43,7 +44,8 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
   Future<void> fetchOtherUserRecords() async {
     try {
       final client = CustomHttpClient(context);
-      final response = await client.get(Uri.parse("$baseUrl/other-user-records/"));
+      final response =
+          await client.get(Uri.parse("$baseUrl/other-user-records/"));
 
       if (response.statusCode == 200) {
         final decodedBody = utf8.decode(response.bodyBytes);
@@ -216,13 +218,15 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
                 const SizedBox(height: 8),
                 if (selectedCategory == '날짜')
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                     child: Center(
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFB5E1B5),
                           foregroundColor: const Color(0xFF446F24),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(40),
                           ),
@@ -248,7 +252,8 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
                       crossAxisCount: 4,
                       childAspectRatio: 1.6,
                       physics: const NeverScrollableScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 12, horizontal: 8),
                       mainAxisSpacing: 8,
                       crossAxisSpacing: 8,
                       children: regions.map((region) {
@@ -263,7 +268,9 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
                           child: Container(
                             alignment: Alignment.center, // 텍스트 중앙 정렬
                             decoration: BoxDecoration(
-                              color: isSelected ? const Color(0x5E446F24) : Colors.white,
+                              color: isSelected
+                                  ? const Color(0x5E446F24)
+                                  : Colors.white,
                               borderRadius: BorderRadius.circular(15),
                               border: Border.all(
                                 color: const Color(0xFF446F24),
@@ -276,7 +283,8 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
                               style: TextStyle(
                                 fontFamily: 'HakgyoansimGeurimilgi',
                                 fontWeight: FontWeight.w600,
-                                fontSize: (screenWidth * 0.06).clamp(14.0, 24.0),
+                                fontSize:
+                                    (screenWidth * 0.06).clamp(14.0, 24.0),
                                 color: Colors.black,
                               ),
                             ),
@@ -287,7 +295,8 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
                   ),
                 if (selectedCategory == '주제')
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8), // ✅ 여기로 이동
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 12, horizontal: 8), // ✅ 여기로 이동
                     child: Wrap(
                       spacing: 8,
                       runSpacing: 8,
@@ -297,7 +306,8 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
                         return ChoiceChip(
                           showCheckmark: false,
                           avatar: null,
-                          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 6, horizontal: 16),
                           label: Text(
                             topic,
                             style: TextStyle(
@@ -399,7 +409,8 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
           border: Border.all(color: const Color(0xFF446F24), width: 2.0),
         ),
         child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           onTap: () {
             Navigator.push(
               context,
@@ -447,7 +458,32 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
               fontSize: screenWidth * 0.045,
             ),
           ),
-          trailing: const Icon(Icons.volume_up_rounded),
+          trailing: IconButton(
+            icon: const Icon(Icons.volume_up_rounded),
+            onPressed: () async {
+              final content = record['content'] ?? '';
+              if (content.trim().isEmpty) return;
+
+              final ttsUrl = "$baseUrl/tts/synthesize";
+              final response = await http.post(
+                Uri.parse(ttsUrl),
+                headers: {'Content-Type': 'application/json'},
+                body: json.encode({'text': content}),
+              );
+
+              if (response.statusCode == 200) {
+                final result = json.decode(utf8.decode(response.bodyBytes));
+                final audioUrl = "$baseUrl${result['file_url']}";
+                final player = AudioPlayer();
+                await player.play(UrlSource(audioUrl));
+              } else {
+                print("TTS 실패: ${response.body}");
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('음성 생성 실패')),
+                );
+              }
+            },
+          ),
         ),
       ),
     );
@@ -491,20 +527,18 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
             Expanded(
               child: filteredRecords.isEmpty
                   ? Center(
-                child: Text(
-                  '결과 없음',
-                  style: TextStyle(
-                    fontFamily: 'HakgyoansimGeurimilgi',
-                    fontWeight: FontWeight.w500,
-                    fontSize: (screenWidth * 0.05).clamp(16.0, 22.0),
-                  )
-                ),
-              )
+                      child: Text('결과 없음',
+                          style: TextStyle(
+                            fontFamily: 'HakgyoansimGeurimilgi',
+                            fontWeight: FontWeight.w500,
+                            fontSize: (screenWidth * 0.05).clamp(16.0, 22.0),
+                          )),
+                    )
                   : ListView.builder(
-                itemCount: filteredRecords.length,
-                itemBuilder: (context, index) =>
-                    _buildRecordCard(filteredRecords[index]),
-              ),
+                      itemCount: filteredRecords.length,
+                      itemBuilder: (context, index) =>
+                          _buildRecordCard(filteredRecords[index]),
+                    ),
             ),
           ],
         ),

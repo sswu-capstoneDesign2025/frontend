@@ -1,5 +1,3 @@
-// lib/widgets/custom_layout.dart
-
 import 'package:flutter/material.dart';
 import 'custom_app_bar.dart';
 
@@ -20,6 +18,7 @@ class CustomLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: backgroundColor, 
       appBar: CustomAppBar(
         backgroundColor: backgroundColor,
         titleText: appBarTitle,

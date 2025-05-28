@@ -20,6 +20,7 @@ import 'package:capstone_story_app/utils/audio_utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:capstone_story_app/screens/health/health_screen.dart';
 import 'package:capstone_story_app/screens/home/weather_screen.dart';
+import 'package:just_audio/just_audio.dart';
 
 
 import '../auth/login_page.dart';
@@ -33,8 +34,10 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final AudioRecorder _recorder = AudioRecorder();
+  final _audioPlayer = AudioPlayer();
   bool _isRecording = false;
   bool _isCountdown = false;
+  bool _isProcessing = false;
   String? _transcribedText;
   DateTime? _recordStartTime;
   int _selectedIndex = 1;
@@ -202,14 +205,15 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-
   Future<void> _handleVoiceInteraction({
     String? filePath,
     Uint8List? webBytes,
   }) async {
+    setState(() => _isProcessing = true);
     final uri = Uri.parse('$_baseUrl/process/audio/');
     final req = http.MultipartRequest('POST', uri);
 
+    // 파일 추가
     if (webBytes != null) {
       req.files.add(
         http.MultipartFile.fromBytes(
@@ -222,16 +226,15 @@ class _HomeScreenState extends State<HomeScreen> {
     } else if (filePath != null) {
       req.files.add(await http.MultipartFile.fromPath('file', filePath));
     } else {
+      setState(() => _isProcessing = false);
       return;
     }
 
-    // 세션 상태 같이 전송
+    // 세션 상태와 사용자 이름 추가
     req.fields['session_state'] = _sessionState;
-
-    // 로그인된 사용자 이름 추가도 가능
     final prefs = await SharedPreferences.getInstance();
-    final username = prefs.getString('username');
-    if (username != null) req.fields['username'] = username;
+    final username = prefs.getString('username') ?? 'anonymous';
+    req.fields['username'] = username;
 
     final res = await req.send();
     final body = await res.stream.bytesToString();
@@ -239,40 +242,60 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (res.statusCode != 200) {
       print('🛑 처리 실패');
+      setState(() => _isProcessing = false);
       return;
     }
 
     final decoded = jsonDecode(body);
-    String responseText = '응답 없음';
     final type = decoded['type'] ?? 'unknown';
     final nextState = decoded['next_state'] ?? 'initial';
 
-    Map<String, dynamic>? result;
+    String responseText = '응답 없음';
+    String? audioUrlPath;
 
-    if (type == 'news' || type == 'weather') {
-      result = decoded['result'];
-      responseText = result?['combined_summary'] ?? '요약 없음';
+    // 📌 type별 분기
+    if (type == 'weather') {
+      // weather는 response 내부에 summary만 있음
+      final response = decoded['response'];
+      responseText = response?['summary'] ?? decoded['response_text'] ?? '요약 없음';
+      audioUrlPath = decoded['response_audio_url'];
+    } else if (type == 'news') {
+      final result = decoded['result'];
+      final combined = result?['combined_summary'];
+      if (combined is String) {
+        responseText = combined;
+      } else {
+        responseText = decoded['response_text'] ?? '요약 없음';
+      }
+      audioUrlPath = decoded['response_audio_url'];
     } else {
-      responseText = decoded['response'] ?? '응답 없음';
+      responseText = decoded['response_text'] ?? decoded['response'] ?? '응답 없음';
+      audioUrlPath = decoded['response_audio_url'];
     }
-    print('🧠 분류 결과 type: $type, nextState: $nextState');
 
+
+    // 상태 업데이트
+    print('📢 서버 응답 텍스트: $responseText');
     setState(() {
-      _transcribedText = responseText;
-      if (nextState == "complete") {
-        print('✅ 대화 플로우 완료! 상태 초기화');
-        _sessionState = "initial";
-      }
-      else if(nextState == "initial") {
-        print('✅ 초기화 필요! 상태 초기화');
-        _sessionState = "initial";
-      }
-      else {
-        _sessionState = nextState;
-      }
+      _sessionState = (nextState == "complete" || nextState == "initial") ? "initial" : nextState;
     });
 
-    // 분기 처리
+    // 🎵 음성 자동 재생
+    if (audioUrlPath != null) {
+      final fullAudioUrl = '$_baseUrl$audioUrlPath';
+      try {
+        print('🔊 음성 재생 시작: $fullAudioUrl');
+        setState(() => _isProcessing = false);
+        await _audioPlayer.setUrl(fullAudioUrl);
+        await _audioPlayer.play();
+      } catch (e) {
+        print('❌ 음성 재생 실패: $e');
+      }
+    }
+
+    setState(() => _isProcessing = false);
+
+    // 디버깅 출력
     if (type == 'news' || type == 'weather') {
       final result = decoded['result'];
       final summaries = result?['summaries'] as List<dynamic>?;
@@ -282,14 +305,12 @@ class _HomeScreenState extends State<HomeScreen> {
           final item = summaries[i] as Map<String, dynamic>;
           final url = item['url'] ?? 'URL 없음';
           final summary = item['summary'] ?? '요약 없음';
-
           print('📰 [기사 ${i + 1}]\n📎 URL: $url\n📝 요약: $summary\n');
         }
       }
 
       final keywords = result?['keywords']?.join(', ') ?? '키워드 없음';
-      print('🔍 키워드: $keywords\n\n');
-      print('🧾 통합 요약문: $responseText');
+      print('🔍 키워드: $keywords\n🧾 통합 요약문: $responseText');
     } else if (type == 'story') {
       print('🗣️ 응답: $responseText / 다음 상태: $nextState');
     } else if (type == 'invalid') {
@@ -308,6 +329,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isProcessing) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFE3FFCD),
+        body: Center(child: _buildLoadingMessage()),
+      );
+    }
     return CustomLayout(
       appBarTitle: '말벗',
       isHome: true,
@@ -537,4 +564,22 @@ class _HomeScreenState extends State<HomeScreen> {
       }),
     );
   }
+  Widget _buildLoadingMessage() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SpinKitThreeBounce(color: Color(0xFF78CF97), size: 30),
+        const SizedBox(height: 10),
+        const Text(
+          "대답을 생성하고 있어요...",
+          style: TextStyle(
+            fontFamily: 'HakgyoansimGeurimilgi',
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+
 }

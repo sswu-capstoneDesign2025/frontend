@@ -37,6 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final _audioPlayer = AudioPlayer();
   bool _isRecording = false;
   bool _isCountdown = false;
+  bool _isProcessing = false;
   String? _transcribedText;
   DateTime? _recordStartTime;
   int _selectedIndex = 1;
@@ -204,14 +205,15 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-
   Future<void> _handleVoiceInteraction({
     String? filePath,
     Uint8List? webBytes,
   }) async {
+    setState(() => _isProcessing = true);
     final uri = Uri.parse('$_baseUrl/process/audio/');
     final req = http.MultipartRequest('POST', uri);
 
+    // 파일 추가
     if (webBytes != null) {
       req.files.add(
         http.MultipartFile.fromBytes(
@@ -224,14 +226,15 @@ class _HomeScreenState extends State<HomeScreen> {
     } else if (filePath != null) {
       req.files.add(await http.MultipartFile.fromPath('file', filePath));
     } else {
+      setState(() => _isProcessing = false);
       return;
     }
 
     // 세션 상태와 사용자 이름 추가
     req.fields['session_state'] = _sessionState;
     final prefs = await SharedPreferences.getInstance();
-    final username = prefs.getString('username');
-    if (username != null) req.fields['username'] = username;
+    final username = prefs.getString('username') ?? 'anonymous';
+    req.fields['username'] = username;
 
     final res = await req.send();
     final body = await res.stream.bytesToString();
@@ -239,6 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (res.statusCode != 200) {
       print('🛑 처리 실패');
+      setState(() => _isProcessing = false);
       return;
     }
 
@@ -249,14 +253,19 @@ class _HomeScreenState extends State<HomeScreen> {
     String responseText = '응답 없음';
     String? audioUrlPath;
 
-// 📌 type별로 responseText 추출 방식 분기
-    if (type == 'weather' || type == 'news') {
-      final result = decoded['response'] ?? decoded['result'];
+    // 📌 type별 분기
+    if (type == 'weather') {
+      // weather는 response 내부에 summary만 있음
+      final response = decoded['response'];
+      responseText = response?['summary'] ?? decoded['response_text'] ?? '요약 없음';
+      audioUrlPath = decoded['response_audio_url'];
+    } else if (type == 'news') {
+      final result = decoded['result'];
       final combined = result?['combined_summary'];
-      if (combined is Map<String, dynamic> && combined.containsKey('summary')) {
-        responseText = combined['summary'] ?? '요약 없음';
-      } else if (combined is String) {
+      if (combined is String) {
         responseText = combined;
+      } else {
+        responseText = decoded['response_text'] ?? '요약 없음';
       }
       audioUrlPath = decoded['response_audio_url'];
     } else {
@@ -264,17 +273,19 @@ class _HomeScreenState extends State<HomeScreen> {
       audioUrlPath = decoded['response_audio_url'];
     }
 
+
     // 상태 업데이트
+    print('📢 서버 응답 텍스트: $responseText');
     setState(() {
-      _transcribedText = responseText;
       _sessionState = (nextState == "complete" || nextState == "initial") ? "initial" : nextState;
     });
 
-// 🎵 음성 자동 재생
+    // 🎵 음성 자동 재생
     if (audioUrlPath != null) {
       final fullAudioUrl = '$_baseUrl$audioUrlPath';
       try {
         print('🔊 음성 재생 시작: $fullAudioUrl');
+        setState(() => _isProcessing = false);
         await _audioPlayer.setUrl(fullAudioUrl);
         await _audioPlayer.play();
       } catch (e) {
@@ -282,7 +293,9 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
 
-    // 📌 분기별 디버깅 출력
+    setState(() => _isProcessing = false);
+
+    // 디버깅 출력
     if (type == 'news' || type == 'weather') {
       final result = decoded['result'];
       final summaries = result?['summaries'] as List<dynamic>?;
@@ -316,6 +329,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isProcessing) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFE3FFCD),
+        body: Center(child: _buildLoadingMessage()),
+      );
+    }
     return CustomLayout(
       appBarTitle: '말벗',
       isHome: true,
@@ -545,4 +564,22 @@ class _HomeScreenState extends State<HomeScreen> {
       }),
     );
   }
+  Widget _buildLoadingMessage() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SpinKitThreeBounce(color: Color(0xFF78CF97), size: 30),
+        const SizedBox(height: 10),
+        const Text(
+          "대답을 생성하고 있어요...",
+          style: TextStyle(
+            fontFamily: 'HakgyoansimGeurimilgi',
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+
 }

@@ -7,7 +7,7 @@ import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:capstone_story_app/services/auth_service.dart';
 import 'package:capstone_story_app/screens/home/home_screen.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
 import '../root_decider.dart';
 
 
@@ -57,10 +57,17 @@ class _KakaoExtraInfoPageState extends State<KakaoExtraInfoPage> {
         }),
       );
 
+      print("🔵 응답 status: ${response.statusCode}");
+      print("🔵 응답 body: ${response.body}");
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final token = data['access_token'];
         await AuthService.saveToken(token);
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('is_logged_in', true);
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const RootDecider()),
@@ -81,33 +88,100 @@ class _KakaoExtraInfoPageState extends State<KakaoExtraInfoPage> {
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFE3FFCD),
-      appBar: AppBar(title: const Text("추가 정보 입력")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            const Text("환영합니다! 정보를 입력해주세요."),
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(labelText: "이름"),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFE3FFCD),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black, size: 35),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          '추가 정보 입력',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 25,
+            fontFamily: 'HakgyoansimGeurimilgi',
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(28),
+          child: DefaultTextStyle(
+            style: const TextStyle(fontFamily: 'HakgyoansimGeurimilgi', fontSize: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text("이름", style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    hintText: "이름을 입력해주세요",
+                    hintStyle: TextStyle(fontFamily: 'HakgyoansimGeurimilgi', fontSize: 18),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(16)),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                  ),
+                ),
+                const SizedBox(height: 25),
+
+                const Text("휴대폰번호", style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: phoneController,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                    hintText: "휴대폰 번호를 입력해주세요",
+                    hintStyle: TextStyle(fontFamily: 'HakgyoansimGeurimilgi', fontSize: 18),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(16)),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                  ),
+                ),
+                const SizedBox(height: 50),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 60,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _submitExtraInfo,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF78CF97),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                    child: _isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                      "제출",
+                      style: TextStyle(
+                        fontFamily: 'HakgyoansimGeurimilgi',
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            TextField(
-              controller: phoneController,
-              decoration: const InputDecoration(labelText: "전화번호"),
-              keyboardType: TextInputType.phone,
-            ),
-            const SizedBox(height: 16),
-            _isLoading
-                ? const CircularProgressIndicator()
-                : ElevatedButton(
-              onPressed: _submitExtraInfo,
-              child: const Text("제출"),
-            ),
-          ],
+          ),
         ),
       ),
     );

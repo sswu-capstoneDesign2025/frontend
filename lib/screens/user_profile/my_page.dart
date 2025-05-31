@@ -154,8 +154,14 @@ class _MyPageState extends State<MyPage> {
   Future<void> _loadUserData() async {
     final userData = await AuthService().fetchUserProfile(context);
     if (userData != null) {
+      final prefs = await SharedPreferences.getInstance();
+      final fetchedNickname = userData['nickname'];
+
+      await prefs.setString('nickname', fetchedNickname); // ✅ 저장
+      print('✅ 닉네임 SharedPreferences에 저장됨: $fetchedNickname');
+
       setState(() {
-        nickname = userData['nickname'];
+        nickname = fetchedNickname;
         name = userData['name'];
         imageUrl = userData['profile_image'];
       });

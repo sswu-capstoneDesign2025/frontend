@@ -1,4 +1,4 @@
-// Updated UserStoreScreen with 날짜, 지역, 주제 필터 포함
+// Updated UserStoreScreen with 날짜, 지역, 주제 필터 포함 + mypage 닉네임 기반 필터링
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -10,6 +10,7 @@ import 'package:capstone_story_app/screens/home/news_screen.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../services/custom_http_client.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class UserStoreScreen extends StatefulWidget {
   const UserStoreScreen({super.key});
@@ -31,6 +32,7 @@ class _UserStoreScreenState extends State<UserStoreScreen> {
   String? selectedRegion;
   String? selectedTopic;
   String sortOrder = '최신순';
+  String? myNickname;
 
   final List<String> regions = ['서울', '부산', '대구', '인천', '광주', '대전', '용산', '세종'];
   final List<String> topics = ['일상', '사랑', '설화'];
@@ -38,7 +40,23 @@ class _UserStoreScreenState extends State<UserStoreScreen> {
   @override
   void initState() {
     super.initState();
-    fetchOtherUserRecords();
+    loadNicknameAndRecords();
+  }
+
+  Future<void> loadNicknameAndRecords() async {
+    final prefs = await SharedPreferences.getInstance();
+    final nickname = prefs.getString('nickname');
+
+    if (nickname != null) {
+      setState(() {
+        myNickname = nickname;
+      });
+      print('닉네임 로드됨: $nickname'); // 여기에 출력
+    } else {
+      print('닉네임이 SharedPreferences에 존재하지 않음');
+    }
+
+    await fetchOtherUserRecords();
   }
 
   Future<void> fetchOtherUserRecords() async {
@@ -49,16 +67,20 @@ class _UserStoreScreenState extends State<UserStoreScreen> {
 
       if (response.statusCode == 200) {
         final decodedBody = utf8.decode(response.bodyBytes);
-        final records = json.decode(decodedBody);
+        final List<Map<String, dynamic>> records =
+            List<Map<String, dynamic>>.from(json.decode(decodedBody));
+        final myRecords =
+            records.where((r) => r['author'] == myNickname).toList();
+
         setState(() {
-          allRecords = records;
-          filteredRecords = records;
+          allRecords = myRecords;
+          filteredRecords = myRecords;
         });
       } else {
-        print('Failed to load records: ${response.statusCode}');
+        print('Failed to load records: \${response.statusCode}');
       }
     } catch (e) {
-      print('Error fetching records: $e');
+      print('Error fetching records: ${e.toString()}');
     }
   }
 

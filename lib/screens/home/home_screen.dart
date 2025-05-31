@@ -46,7 +46,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Timer? _dotTimer;
   int? _countdown;
   String _sessionState = "initial";
-  
+  String? _lastNewsKeyword = null;
+  String responseText = '응답 없음';
+  String? audioUrlPath;
+
   @override
   void initState() {
     super.initState();
@@ -87,7 +90,7 @@ class _HomeScreenState extends State<HomeScreen> {
     } else {
       setState(() => _selectedIndex = index);
     }
-}
+  }
 
   Future<void> _toggleVoiceInteraction() async {
     if (_isCountdown) {
@@ -101,10 +104,9 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     if (_isRecording) {
-      _recordTimer?.cancel();
       _dotTimer?.cancel();
       _activeDot = 0;
-      setState(() => _isRecording = false);
+      setState(() => _isRecording = false); // 먼저 false 처리
 
       String? filePath;
       Uint8List? webBytes;
@@ -188,34 +190,15 @@ class _HomeScreenState extends State<HomeScreen> {
           _webSubscription = stream.listen((data) {
             _webChunks.addAll(data);
           });
-
-          // 웹도 5분 후 강제 stop
-          _recordTimer = Timer(const Duration(minutes: 5), () {
-            if (_isRecording) {
-              print('⏱️ [웹] 5분 경과 자동 종료');
-              _toggleVoiceInteraction();
-            }
-          });
         } else {
           final dir = await getTemporaryDirectory();
           final tmpPath =
               '${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.wav';
           await _recorder.start(
-            const RecordConfig(
-              encoder: AudioEncoder.wav,
-              // ⛔️ maxDuration 지원 안 하므로 제거!
-            ),
+            const RecordConfig(encoder: AudioEncoder.wav),
             path: tmpPath,
           );
           print('🎙️ 파일 녹음 시작: $tmpPath');
-
-          // 5분 타이머로 수동 종료
-          _recordTimer = Timer(const Duration(minutes: 5), () {
-            if (_isRecording) {
-              print('⏱️ 5분 경과 자동 종료');
-              _toggleVoiceInteraction();
-            }
-          });
         }
       } catch (e) {
         print('❌ 녹음 시작 실패: $e');
@@ -223,7 +206,6 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     });
   }
-
 
   Future<void> _handleVoiceInteraction({
     String? filePath,
@@ -249,7 +231,6 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() => _isProcessing = false);
       return;
     }
-    
 
     // 세션 상태와 사용자 이름 추가
     req.fields['session_state'] = _sessionState;
@@ -285,7 +266,7 @@ class _HomeScreenState extends State<HomeScreen> {
             builder: (_) => NewsScreen(inputText: keywordText),
           ),
         );
-        return; 
+        return;
       }
 
       // 키워드가 없을 경우 처리
@@ -298,7 +279,8 @@ class _HomeScreenState extends State<HomeScreen> {
     if (type == 'weather') {
       // weather는 response 내부에 summary만 있음
       final response = decoded['response'];
-      responseText = response?['summary'] ?? decoded['response_text'] ?? '요약 없음';
+      responseText =
+          response?['summary'] ?? decoded['response_text'] ?? '요약 없음';
       audioUrlPath = decoded['response_audio_url'];
     } else if (type == 'news') {
       final result = decoded['result'];
@@ -314,11 +296,12 @@ class _HomeScreenState extends State<HomeScreen> {
       audioUrlPath = decoded['response_audio_url'];
     }
 
-
     // 상태 업데이트
     print('📢 서버 응답 텍스트: $responseText');
     setState(() {
-      _sessionState = (nextState == "complete" || nextState == "initial") ? "initial" : nextState;
+      _sessionState = (nextState == "complete" || nextState == "initial")
+          ? "initial"
+          : nextState;
     });
 
     // 🎵 음성 자동 재생
@@ -359,14 +342,12 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-
   @override
   void dispose() {
     _dotTimer?.cancel();
     _recorder.dispose();
     super.dispose();
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -444,7 +425,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                         ),
                                       ),
                                       AnimatedSwitcher(
-                                        duration: const Duration(milliseconds: 300),
+                                        duration:
+                                            const Duration(milliseconds: 300),
                                         child: Text(
                                           '$_countdown',
                                           key: ValueKey(_countdown),
@@ -484,11 +466,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                         children: [
                                           Expanded(
                                             child: _buildGridButton(
-                                                Icons.article, "뉴스", () => _onItemTapped(0)),
+                                                Icons.article,
+                                                "뉴스",
+                                                () => _onItemTapped(0)),
                                           ),
                                           Expanded(
                                             child: _buildGridButton(
-                                                Icons.groups, "수다", () => _onItemTapped(2)),
+                                                Icons.groups,
+                                                "수다",
+                                                () => _onItemTapped(2)),
                                           ),
                                         ],
                                       ),
@@ -496,16 +482,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                     Expanded(
                                       child: Row(
                                         children: [
-
                                           Expanded(
                                             child: _buildGridButton(
                                               'assets/images/weather.svg',
                                               "날씨",
-                                                  () {
+                                              () {
                                                 Navigator.push(
                                                   context,
                                                   MaterialPageRoute(
-                                                    builder: (context) => const TodayWeatherScreen(),
+                                                    builder: (context) =>
+                                                        const TodayWeatherScreen(),
                                                   ),
                                                 );
                                               },
@@ -513,12 +499,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                           ),
                                           Expanded(
                                             child: _buildGridButton(
-                                                'assets/images/health.svg', "건강", () {
+                                                'assets/images/health.svg',
+                                                "건강", () {
                                               if (_isCountdown) return;
                                               Navigator.push(
                                                 context,
                                                 MaterialPageRoute(
-                                                  builder: (_) => const HealthScreen(),
+                                                  builder: (_) =>
+                                                      const HealthScreen(),
                                                 ),
                                               );
                                             }),
@@ -562,8 +550,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-
-  Widget _buildGridButton(dynamic iconOrPath, String label, VoidCallback onTap) {
+  Widget _buildGridButton(
+      dynamic iconOrPath, String label, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
       child: Column(
@@ -573,11 +561,12 @@ class _HomeScreenState extends State<HomeScreen> {
               ? SvgPicture.asset(iconOrPath, width: 60, height: 60)
               : Icon(iconOrPath, size: 60),
           const SizedBox(height: 4),
-          Text(label, style: const TextStyle(
-              fontSize: 28,
-              fontFamily: 'HakgyoansimGeurimilgi',
-              fontWeight: FontWeight.bold,
-          )),
+          Text(label,
+              style: const TextStyle(
+                fontSize: 28,
+                fontFamily: 'HakgyoansimGeurimilgi',
+                fontWeight: FontWeight.bold,
+              )),
         ],
       ),
     );
@@ -605,6 +594,7 @@ class _HomeScreenState extends State<HomeScreen> {
       }),
     );
   }
+
   Widget _buildLoadingMessage() {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -622,5 +612,4 @@ class _HomeScreenState extends State<HomeScreen> {
       ],
     );
   }
-
 }

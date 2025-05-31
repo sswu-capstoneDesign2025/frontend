@@ -33,6 +33,7 @@ dependencies:
   geocoding: ^3.0.0
   just_audio: ^0.10.3
   audioplayers: ^5.2.1
+  just_audio_windows: ^0.2.2
 
 
 dev_dependencies:

@@ -146,7 +146,7 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
 
   @override
   void dispose() {
-    _audioPlayer.dispose();  // 🎧 음성 플레이어 메모리 정리
+    _audioPlayer.dispose(); // 🎧 음성 플레이어 메모리 정리
     super.dispose();
   }
 
@@ -160,6 +160,11 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
             resetFilter();
           } else {
             selectedCategory = label;
+
+            // ✅ 다른 필터 초기화
+            selectedDateRange = null;
+            selectedRegion = null;
+            selectedTopic = null;
           }
         });
       },

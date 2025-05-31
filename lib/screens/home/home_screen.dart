@@ -22,7 +22,6 @@ import 'package:capstone_story_app/screens/health/health_screen.dart';
 import 'package:capstone_story_app/screens/home/weather_screen.dart';
 import 'package:just_audio/just_audio.dart';
 
-
 import '../auth/login_page.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -47,6 +46,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Timer? _dotTimer;
   int? _countdown;
   String _sessionState = "initial";
+  String _lastNewsKeyword = "오늘의 뉴스"; 
+  String responseText = '응답 없음';
+  String? audioUrlPath;
+
 
   @override
   void initState() {
@@ -70,25 +73,25 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onItemTapped(int index) {
-    if (_isCountdown) return; // 카운트다운 중에는 다른 화면 이동 방지
+    if (_isCountdown) return;
     if (index == 0) {
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
-          builder: (_) => const NewsScreen(inputText: "오늘 뉴스 알려줘"),
+          builder: (_) => NewsScreen(inputText: _lastNewsKeyword), // ✅ 수정된 부분
         ),
-            (route) => false,
+        (route) => false,
       );
     } else if (index == 2) {
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const OtherUserStoreScreen()),
-            (route) => false,
+        (route) => false,
       );
     } else {
       setState(() => _selectedIndex = index);
     }
-  }
+}
 
   Future<void> _toggleVoiceInteraction() async {
     if (_isCountdown) {
@@ -229,6 +232,7 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() => _isProcessing = false);
       return;
     }
+    
 
     // 세션 상태와 사용자 이름 추가
     req.fields['session_state'] = _sessionState;
@@ -250,8 +254,28 @@ class _HomeScreenState extends State<HomeScreen> {
     final type = decoded['type'] ?? 'unknown';
     final nextState = decoded['next_state'] ?? 'initial';
 
-    String responseText = '응답 없음';
-    String? audioUrlPath;
+    if (type == 'news') {
+      final result = decoded['result'];
+      final keywords = result?['keywords'];
+
+      if (keywords != null && keywords.isNotEmpty) {
+        final keywordText = keywords.join(" ");
+        _lastNewsKeyword = keywordText;
+        setState(() => _isProcessing = false);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => NewsScreen(inputText: keywordText),
+          ),
+        );
+        return; 
+      }
+
+      // 키워드가 없을 경우 처리
+      final combined = result?['combined_summary'];
+      responseText = combined ?? decoded['response_text'] ?? '요약 없음';
+      audioUrlPath = decoded['response_audio_url'];
+    }
 
     // 📌 type별 분기
     if (type == 'weather') {

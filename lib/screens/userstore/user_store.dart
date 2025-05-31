@@ -280,7 +280,7 @@ class _UserStoreScreenState extends State<UserStoreScreen> {
                   ),
                 if (selectedCategory == '지역')
                   SizedBox(
-                    height: (screenWidth * 0.25).clamp(120.0, 200.0),
+                    height: (screenWidth * 0.4).clamp(120.0, 200.0),
                     child: GridView.count(
                       crossAxisCount: 4,
                       childAspectRatio: 1.6,

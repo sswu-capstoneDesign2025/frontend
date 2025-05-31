@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:capstone_story_app/services/auth_service.dart';
+import 'package:capstone_story_app/screens/userstore/user_store.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -61,7 +62,6 @@ class _MyPageState extends State<MyPage> {
     await _loadUserData();
   }
 
-
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: ImageSource.gallery);
@@ -90,7 +90,8 @@ class _MyPageState extends State<MyPage> {
     }
 
     final PlatformFile file = result.files.single;
-    print('📁 [DEBUG] pickFiles 파일명=${file.name}, 확장자=${file.extension}, size=${file.size}');
+    print(
+        '📁 [DEBUG] pickFiles 파일명=${file.name}, 확장자=${file.extension}, size=${file.size}');
 
     // 2) 확장자 검증(사실 FilePicker가 필터링해주지만, 안전장치로 한 번 더)
     final ext = file.extension?.toLowerCase();
@@ -117,11 +118,10 @@ class _MyPageState extends State<MyPage> {
     await uploadProfileImageWeb(file.bytes!);
   }
 
-
-
   Future<void> uploadProfileImageWeb(Uint8List bytes) async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('access_token') ?? prefs.getString('jwt_token');
+    final token =
+        prefs.getString('access_token') ?? prefs.getString('jwt_token');
 
     final client = CustomHttpClient(context);
 
@@ -170,7 +170,7 @@ class _MyPageState extends State<MyPage> {
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => const LoginPage()),
-          (route) => false,
+      (route) => false,
     );
   }
 
@@ -202,8 +202,11 @@ class _MyPageState extends State<MyPage> {
                     backgroundImage: _webImageBytes != null
                         ? MemoryImage(_webImageBytes!)
                         : (imageUrl != null
-                        ? NetworkImage('$baseUrl${imageUrl!}?v=${DateTime.now().millisecondsSinceEpoch}')
-                        : const AssetImage('assets/images/profile_sample.png')) as ImageProvider,
+                                ? NetworkImage(
+                                    '$baseUrl${imageUrl!}?v=${DateTime.now().millisecondsSinceEpoch}')
+                                : const AssetImage(
+                                    'assets/images/profile_sample.png'))
+                            as ImageProvider,
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -236,7 +239,8 @@ class _MyPageState extends State<MyPage> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 30, vertical: 6),
                   ),
                   child: Text(
                     '수정',
@@ -248,15 +252,23 @@ class _MyPageState extends State<MyPage> {
                 ),
 
                 const SizedBox(height: 30),
+                _buildMenuButton('나의 스토리 보기', () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const UserStoreScreen()),
+                  );
+                }, buttonWidth),
                 _buildMenuButton('비밀번호 변경', () {}, buttonWidth),
                 _buildMenuButton('앱 설정', () {}, buttonWidth),
                 const SizedBox(height: 12),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _buildOutlinedButton('로그아웃', _logout, width: buttonWidth * 0.48),
+                    _buildOutlinedButton('로그아웃', _logout,
+                        width: buttonWidth * 0.48),
                     const SizedBox(width: 12),
-                    _buildOutlinedButton('탈퇴', _logout, width: buttonWidth * 0.48),
+                    _buildOutlinedButton('탈퇴', _logout,
+                        width: buttonWidth * 0.48),
                   ],
                 ),
                 const SizedBox(height: 40),
@@ -304,10 +316,12 @@ class _MyPageState extends State<MyPage> {
   /// 프로필 사진 삭제 API 호출
   Future<void> deleteProfileImage() async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('access_token') ?? prefs.getString('jwt_token');
+    final token =
+        prefs.getString('access_token') ?? prefs.getString('jwt_token');
 
     final client = CustomHttpClient(context);
-    final request = http.Request('DELETE', Uri.parse('$baseUrl/auth/profile-image'));
+    final request =
+        http.Request('DELETE', Uri.parse('$baseUrl/auth/profile-image'));
     request.headers['Authorization'] = 'Bearer $token';
 
     final response = await client.send(request);
@@ -349,18 +363,19 @@ class _MyPageState extends State<MyPage> {
   }
 
   Widget _buildOutlinedButton(
-      String text,
-      VoidCallback onPressed, {
-        double? width,
-        double? height,
-      }) {
+    String text,
+    VoidCallback onPressed, {
+    double? width,
+    double? height,
+  }) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final screenWidth = MediaQuery.of(context).size.width;
 
         final effectiveWidth = width ?? screenWidth * 0.45; // 기본 45%
         final effectiveHeight = height ?? screenWidth * 0.13; // 기본 높이 비율
-        final fontSize = (screenWidth * 0.05).clamp(14.0, 22.0); // 글씨 크기 비율 + 최대/최소 제한
+        final fontSize =
+            (screenWidth * 0.05).clamp(14.0, 22.0); // 글씨 크기 비율 + 최대/최소 제한
 
         return SizedBox(
           width: effectiveWidth,

@@ -126,6 +126,16 @@ class _NewsScreenState extends State<NewsScreen> {
       backgroundColor: const Color(0xFFE3FFCD),
       child: isLoading
           ? const Center(child: CircularProgressIndicator())
+           : (widget.inputText == null || widget.inputText!.isEmpty)
+        ? const Center(
+            child: Text(
+              "아직 검색한 뉴스가 없습니다!",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          )
           : Padding(
               padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 20),
               child: Column(

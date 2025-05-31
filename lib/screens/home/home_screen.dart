@@ -46,7 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Timer? _dotTimer;
   int? _countdown;
   String _sessionState = "initial";
-  String _lastNewsKeyword = "오늘의 뉴스"; 
+  String? _lastNewsKeyword = null; 
   String responseText = '응답 없음';
   String? audioUrlPath;
 

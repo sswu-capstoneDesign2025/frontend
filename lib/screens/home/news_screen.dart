@@ -1,12 +1,10 @@
-// ✅ [1] NewsScreen - 뉴스 탭에서 홈/수다로 이동 기능 추가
-
 import 'package:flutter/material.dart';
 import 'package:capstone_story_app/models/news_model.dart';
 import 'package:capstone_story_app/widgets/custom_layout.dart';
 import 'package:capstone_story_app/services/news_service.dart';
 import 'package:capstone_story_app/screens/home/home_screen.dart';
 import 'package:capstone_story_app/screens/userstore/other_user_store_screen.dart';
-import 'package:just_audio/just_audio.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -26,16 +24,17 @@ class _NewsScreenState extends State<NewsScreen> {
   bool isLoading = true;
   bool isPlaying = false;
 
+  final String backendIp = '192.168.30.4'; 
+
   @override
   void initState() {
     super.initState();
     print("🚀 NewsScreen initState 실행됨");
 
-    _audioPlayer.playerStateStream.listen((state) {
-      if (state.processingState == ProcessingState.completed) {
-        setState(() => isPlaying = false);
-      }
+    _audioPlayer.onPlayerComplete.listen((event) {
+      setState(() => isPlaying = false);
     });
+
 
     if (widget.inputText != null) {
       print("🔍 inputText 있음: ${widget.inputText}");
@@ -80,19 +79,19 @@ class _NewsScreenState extends State<NewsScreen> {
       setState(() => isPlaying = false);
     } else {
       try {
-        final uri = Uri.parse('http://localhost:8000/tts/synthesize');
+        final uri = Uri.parse('http://$backendIp:8000/tts/synthesize');
         final res = await http.post(
           uri,
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({'text': combinedNewsSummary}),
         );
         final decoded = jsonDecode(res.body);
-        final audioUrlPath = decoded['file_url']; // ✅ 여기 수정됨
+        final audioUrlPath = decoded['file_url'];
 
         if (audioUrlPath != null) {
-          final fullUrl = 'http://localhost:8000$audioUrlPath';
-          await _audioPlayer.setUrl(fullUrl);
-          await _audioPlayer.play();
+          final fullUrl = 'http://$backendIp:8000$audioUrlPath';
+          await _audioPlayer.stop();            
+          await _audioPlayer.play(UrlSource(fullUrl));
           setState(() => isPlaying = true);
         } else {
           print('❌ TTS URL 없음');

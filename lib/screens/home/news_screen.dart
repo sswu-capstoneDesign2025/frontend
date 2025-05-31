@@ -132,6 +132,7 @@ class _NewsScreenState extends State<NewsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 16),
+
                   const Padding(
                     padding: EdgeInsets.only(left: 10, bottom: 12),
                     child: Text(
@@ -142,6 +143,21 @@ class _NewsScreenState extends State<NewsScreen> {
                       ),
                     ),
                   ),
+
+                  if (widget.inputText != null && widget.inputText!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 10, bottom: 4),
+                      child: Text(
+                         '"${widget.inputText}"',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                      ),
+                  ),
+
+
                   const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.all(16),

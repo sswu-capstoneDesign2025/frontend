@@ -164,12 +164,13 @@ class _MyPageState extends State<MyPage> {
 
   /// 로그아웃
   Future<void> _logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('access_token');
+    await AuthService.logout();
     if (!mounted) return;
-    Navigator.pushReplacement(
+
+    Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => const LoginPage()),
+          (route) => false,
     );
   }
 

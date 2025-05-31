@@ -7,6 +7,7 @@ import 'package:capstone_story_app/screens/userstore/user_store.dart';
 import 'package:capstone_story_app/screens/userstore/other_user_store_screen.dart';
 import 'package:capstone_story_app/screens/home/news_screen.dart';
 
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 
 void main() async {
@@ -25,12 +26,13 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Capstone App',
+      navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const HomeScreen(),  // ✅ 초기화면을 HomeScreen으로
+      home: const RootDecider(),
       routes: {
          '/home': (_) => const HomeScreen(),
       },

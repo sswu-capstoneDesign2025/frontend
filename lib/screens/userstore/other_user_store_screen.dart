@@ -21,7 +21,7 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
   int _selectedIndex = 0;
   List<dynamic> allRecords = [];
   List<dynamic> filteredRecords = [];
-
+  final AudioPlayer _audioPlayer = AudioPlayer();
   final String defaultProfileUrl = 'https://i.pravatar.cc/150?img=1';
   static final String baseUrl = dotenv.env['API_BASE_URL']!;
 
@@ -142,6 +142,12 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
       selectedTopic = null;
       filteredRecords = allRecords;
     });
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();  // 🎧 음성 플레이어 메모리 정리
+    super.dispose();
   }
 
   Widget _buildFilterChip(String label, {required bool isSelected}) {
@@ -474,8 +480,7 @@ class _OtherUserStoreScreenState extends State<OtherUserStoreScreen> {
               if (response.statusCode == 200) {
                 final result = json.decode(utf8.decode(response.bodyBytes));
                 final audioUrl = "$baseUrl${result['file_url']}";
-                final player = AudioPlayer();
-                await player.play(UrlSource(audioUrl));
+                await _audioPlayer.play(UrlSource(audioUrl));
               } else {
                 print("TTS 실패: ${response.body}");
                 ScaffoldMessenger.of(context).showSnackBar(

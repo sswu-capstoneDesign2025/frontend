@@ -47,6 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Timer? _dotTimer;
   int? _countdown;
   String _sessionState = "initial";
+  Timer? _recordTimer;
 
   @override
   void initState() {
@@ -102,9 +103,10 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     if (_isRecording) {
+      _recordTimer?.cancel();
       _dotTimer?.cancel();
       _activeDot = 0;
-      setState(() => _isRecording = false); // 먼저 false 처리
+      setState(() => _isRecording = false);
 
       String? filePath;
       Uint8List? webBytes;
@@ -188,15 +190,34 @@ class _HomeScreenState extends State<HomeScreen> {
           _webSubscription = stream.listen((data) {
             _webChunks.addAll(data);
           });
+
+          // 웹도 5분 후 강제 stop
+          _recordTimer = Timer(const Duration(minutes: 5), () {
+            if (_isRecording) {
+              print('⏱️ [웹] 5분 경과 자동 종료');
+              _toggleVoiceInteraction();
+            }
+          });
         } else {
           final dir = await getTemporaryDirectory();
           final tmpPath =
               '${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.wav';
           await _recorder.start(
-            const RecordConfig(encoder: AudioEncoder.wav),
+            const RecordConfig(
+              encoder: AudioEncoder.wav,
+              // ⛔️ maxDuration 지원 안 하므로 제거!
+            ),
             path: tmpPath,
           );
           print('🎙️ 파일 녹음 시작: $tmpPath');
+
+          // 5분 타이머로 수동 종료
+          _recordTimer = Timer(const Duration(minutes: 5), () {
+            if (_isRecording) {
+              print('⏱️ 5분 경과 자동 종료');
+              _toggleVoiceInteraction();
+            }
+          });
         }
       } catch (e) {
         print('❌ 녹음 시작 실패: $e');
@@ -204,6 +225,7 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     });
   }
+
 
   Future<void> _handleVoiceInteraction({
     String? filePath,

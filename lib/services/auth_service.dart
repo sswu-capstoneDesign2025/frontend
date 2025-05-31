@@ -103,6 +103,16 @@ class AuthService {
     }
   }
 
+  /// 로그아웃: 모든 로그인 관련 정보 초기화
+  static Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('jwt_token');
+    await prefs.remove('access_token'); // 소셜 로그인용
+    await prefs.remove('refresh_token'); // 혹시 있는 경우
+    await prefs.remove('is_logged_in');
+    // 필요한 경우 추가 필드도 지울 수 있음
+  }
+
   /// JWT 토큰 저장
   static Future<void> saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();

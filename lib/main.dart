@@ -6,6 +6,10 @@ import 'package:capstone_story_app/screens/home/home_screen.dart';
 import 'package:capstone_story_app/screens/userstore/user_store.dart';
 import 'package:capstone_story_app/screens/userstore/other_user_store_screen.dart';
 import 'package:capstone_story_app/screens/home/news_screen.dart';
+import 'package:capstone_story_app/services/notification_service.dart'; // ✅ 추가
+import 'package:timezone/data/latest_all.dart' as tz; // ⬅️ 이 줄 추가
+
+
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -13,6 +17,10 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: '.env');
+
+  tz.initializeTimeZones(); // ⬅️ 이 줄 추가
+  // ✅ 알림 초기화
+  await NotificationService.init();
 
   runApp(
     const ProviderScope(child: MyApp()),

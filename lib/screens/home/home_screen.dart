@@ -20,7 +20,8 @@ import 'package:capstone_story_app/utils/audio_utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:capstone_story_app/screens/health/health_screen.dart';
 import 'package:capstone_story_app/screens/home/weather_screen.dart';
-import 'package:just_audio/just_audio.dart';
+//import 'package:just_audio/just_audio.dart';
+import 'package:audioplayers/audioplayers.dart'; 
 
 import '../auth/login_page.dart';
 
@@ -33,7 +34,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final AudioRecorder _recorder = AudioRecorder();
-  final _audioPlayer = AudioPlayer();
+  //final _audioPlayer = AudioPlayer();
+  final AudioPlayer _audioPlayer = AudioPlayer();
   bool _isRecording = false;
   bool _isCountdown = false;
   bool _isProcessing = false;
@@ -75,10 +77,13 @@ class _HomeScreenState extends State<HomeScreen> {
   void _onItemTapped(int index) {
     if (_isCountdown) return;
     if (index == 0) {
+      print('🧪 News 탭 클릭! keyword = $_lastNewsKeyword'); 
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
-          builder: (_) => NewsScreen(inputText: _lastNewsKeyword), // ✅ 수정된 부분
+          builder: (_) => NewsScreen(
+            inputText: _lastNewsKeyword, 
+            summaryText: responseText, ), 
         ),
         (route) => false,
       );
@@ -216,7 +221,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final uri = Uri.parse('$_baseUrl/process/audio/');
     final req = http.MultipartRequest('POST', uri);
 
-    // 파일 추가
+    // 음성 파일 추가
     if (webBytes != null) {
       req.files.add(
         http.MultipartFile.fromBytes(
@@ -232,14 +237,14 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() => _isProcessing = false);
       return;
     }
-    
 
-    // 세션 상태와 사용자 이름 추가
-    req.fields['session_state'] = _sessionState;
+    // 추가 필드
     final prefs = await SharedPreferences.getInstance();
     final username = prefs.getString('username') ?? 'anonymous';
     req.fields['username'] = username;
+    req.fields['session_state'] = _sessionState;
 
+    // 전송 및 응답
     final res = await req.send();
     final body = await res.stream.bytesToString();
     print('🎯 처리 응답: $body');
@@ -253,94 +258,83 @@ class _HomeScreenState extends State<HomeScreen> {
     final decoded = jsonDecode(body);
     final type = decoded['type'] ?? 'unknown';
     final nextState = decoded['next_state'] ?? 'initial';
+    final result = decoded['result'];
 
-    if (type == 'news') {
-      final result = decoded['result'];
-      final keywords = result?['keywords'];
+    final combined = result?['combined_summary'];
+    final keywords = result?['keywords'];
+    final keywordText = keywords?.join(" ") ?? '';
+    final audioPath = decoded['response_audio_url'];
 
-      if (keywords != null && keywords.isNotEmpty) {
-        final keywordText = keywords.join(" ");
-        _lastNewsKeyword = keywordText;
-        setState(() => _isProcessing = false);
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => NewsScreen(inputText: keywordText),
-          ),
-        );
-        return; 
+    responseText = combined ?? decoded['response_text'] ?? '요약 없음';
+    audioUrlPath = audioPath;
+
+    // 📌 뉴스일 경우 TTS 재생 후 뉴스 화면 전환
+    if (type == 'news' && keywordText.isNotEmpty && combined != null && audioPath != null) {
+      _lastNewsKeyword = keywordText;
+
+      try {
+        final fullAudioUrl = '$_baseUrl$audioPath';
+        print('🔊 음성 재생 시작: $fullAudioUrl');
+        await _audioPlayer.play(UrlSource(fullAudioUrl));
+
+        /*_audioPlayer.onPlayerComplete.listen((event) {
+          if (mounted) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => NewsScreen(inputText: keywordText),
+              ),
+            );
+          }
+        });*/
+      } catch (e) {
+        print('❌ 음성 재생 실패: $e');
       }
 
-      // 키워드가 없을 경우 처리
-      final combined = result?['combined_summary'];
-      responseText = combined ?? decoded['response_text'] ?? '요약 없음';
-      audioUrlPath = decoded['response_audio_url'];
+      setState(() => _isProcessing = false);
+      return;
     }
 
-    // 📌 type별 분기
+    // 📌 기타 타입 처리 (날씨, 스토리 등)
     if (type == 'weather') {
-      // weather는 response 내부에 summary만 있음
       final response = decoded['response'];
       responseText = response?['summary'] ?? decoded['response_text'] ?? '요약 없음';
-      audioUrlPath = decoded['response_audio_url'];
-    } else if (type == 'news') {
-      final result = decoded['result'];
-      final combined = result?['combined_summary'];
-      if (combined is String) {
-        responseText = combined;
-      } else {
-        responseText = decoded['response_text'] ?? '요약 없음';
-      }
-      audioUrlPath = decoded['response_audio_url'];
-    } else {
+    } else if (type == 'story') {
       responseText = decoded['response_text'] ?? decoded['response'] ?? '응답 없음';
-      audioUrlPath = decoded['response_audio_url'];
     }
 
-
-    // 상태 업데이트
-    print('📢 서버 응답 텍스트: $responseText');
-    setState(() {
-      _sessionState = (nextState == "complete" || nextState == "initial") ? "initial" : nextState;
-    });
-
-    // 🎵 음성 자동 재생
+    // 🎵 공통 TTS 자동 재생
     if (audioUrlPath != null) {
       final fullAudioUrl = '$_baseUrl$audioUrlPath';
       try {
         print('🔊 음성 재생 시작: $fullAudioUrl');
-        setState(() => _isProcessing = false);
-        await _audioPlayer.setUrl(fullAudioUrl);
-        await _audioPlayer.play();
+        await _audioPlayer.play(UrlSource(fullAudioUrl));
       } catch (e) {
         print('❌ 음성 재생 실패: $e');
       }
     }
 
-    setState(() => _isProcessing = false);
+    // 세션 상태 업데이트
+    setState(() {
+      _sessionState = (nextState == "complete" || nextState == "initial") ? "initial" : nextState;
+      _isProcessing = false;
+    });
 
-    // 디버깅 출력
+    // 디버깅 로그
     if (type == 'news' || type == 'weather') {
-      final result = decoded['result'];
       final summaries = result?['summaries'] as List<dynamic>?;
-
-      if (summaries != null && summaries.isNotEmpty) {
-        for (var i = 0; i < summaries.length; i++) {
+      if (summaries != null) {
+        for (int i = 0; i < summaries.length; i++) {
           final item = summaries[i] as Map<String, dynamic>;
-          final url = item['url'] ?? 'URL 없음';
-          final summary = item['summary'] ?? '요약 없음';
-          print('📰 [기사 ${i + 1}]\n📎 URL: $url\n📝 요약: $summary\n');
+          print('📰 기사 ${i + 1}: ${item['summary']}\n🔗 URL: ${item['url']}');
         }
       }
-
-      final keywords = result?['keywords']?.join(', ') ?? '키워드 없음';
-      print('🔍 키워드: $keywords\n🧾 통합 요약문: $responseText');
-    } else if (type == 'story') {
-      print('🗣️ 응답: $responseText / 다음 상태: $nextState');
+      print('🔍 키워드: $keywordText\n🧾 요약: $responseText');
     } else if (type == 'invalid') {
-      print('⚠️ 무의미한 입력 감지됨. 상태: $nextState');
+      print('⚠️ 무의미한 입력. 상태: $nextState');
     }
   }
+
 
 
   @override

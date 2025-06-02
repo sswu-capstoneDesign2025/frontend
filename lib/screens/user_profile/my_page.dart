@@ -264,7 +264,6 @@ class _MyPageState extends State<MyPage> {
                     MaterialPageRoute(builder: (_) => const UserStoreScreen()),
                   );
                 }, buttonWidth),
-                _buildMenuButton('비밀번호 변경', () {}, buttonWidth),
                 _buildMenuButton('앱 설정', () {}, buttonWidth),
                 const SizedBox(height: 12),
                 Row(

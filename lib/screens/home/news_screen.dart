@@ -8,11 +8,14 @@ import 'package:audioplayers/audioplayers.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:capstone_story_app/screens/home/news_history_screen.dart';
+
 
 class NewsScreen extends StatefulWidget {
   final String? inputText;
+  final String? summaryText; 
 
-  const NewsScreen({super.key, this.inputText});
+  const NewsScreen({super.key, this.inputText, this.summaryText});
 
   @override
   State<NewsScreen> createState() => _NewsScreenState();
@@ -36,13 +39,20 @@ class _NewsScreenState extends State<NewsScreen> {
       setState(() => isPlaying = false);
     });
 
-    if (widget.inputText != null) {
+    if (widget.summaryText != null && widget.summaryText!.isNotEmpty) {
+      print("📝 전달받은 요약문으로 화면 구성!");
+      setState(() {
+        combinedNewsSummary = widget.summaryText!;
+        isLoading = false;
+      });
+    } else if (widget.inputText != null) {
       print("🔍 inputText 있음: ${widget.inputText}");
       loadNewsFromAPI();
     } else {
       isLoading = false;
     }
   }
+
 
   Future<void> loadNewsFromAPI() async {
     try {
@@ -74,34 +84,43 @@ class _NewsScreenState extends State<NewsScreen> {
   }
 
   void _toggleTTS() async {
-    if (isPlaying) {
-      await _audioPlayer.stop();
-      setState(() => isPlaying = false);
-    } else {
-      try {
-        final uri = Uri.parse('http://$backendIp:8000/tts/synthesize');
-        final res = await http.post(
-          uri,
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'text': combinedNewsSummary}),
-        );
-        final decoded = jsonDecode(res.body);
-        final audioUrlPath = decoded['file_url'];
+  if (isPlaying) {
+    await _audioPlayer.stop();
+    await _audioPlayer.release(); 
+    setState(() => isPlaying = false);
+  } else {
+    try {
+      setState(() => isPlaying = true); // 🔒 버튼 비활성화를 위해 미리 설정
+      final uri = Uri.parse('http://$backendIp:8000/tts/synthesize');
 
-        if (audioUrlPath != null) {
-          final fullUrl = 'http://$backendIp:8000$audioUrlPath';
-          await _audioPlayer.stop();
-          await _audioPlayer.play(UrlSource(fullUrl));
-          setState(() => isPlaying = true);
-        } else {
-          print('❌ TTS URL 없음');
-        }
-      } catch (e) {
-        print('❌ TTS 오류: $e');
+      final res = await http
+          .post(
+            uri,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'text': combinedNewsSummary}),
+          )
+          .timeout(const Duration(seconds:15)); // ⏱ 타임아웃 추가
+
+      final decoded = jsonDecode(res.body);
+      final audioUrlPath = decoded['file_url'];
+
+      if (audioUrlPath != null) {
+        final fullUrl = 'http://$backendIp:8000$audioUrlPath';
+        await _audioPlayer.stop();
+        await _audioPlayer.release();
+        await _audioPlayer.seek(Duration.zero); 
+        await _audioPlayer.play(UrlSource(fullUrl));
+        // 재생 완료 시 감지해서 자동으로 꺼짐 처리됨 (initState에서 listener 있음)
+      } else {
+        print('❌ TTS URL 없음');
         setState(() => isPlaying = false);
       }
+    } catch (e) {
+      print('❌ TTS 오류: $e');
+      setState(() => isPlaying = false);
     }
   }
+}
 
   void _onItemTapped(int index) {
     if (index == 1) {
@@ -139,8 +158,7 @@ class _NewsScreenState extends State<NewsScreen> {
                   ),
                 )
               : Padding(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 5, horizontal: 20),
+                  padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -167,8 +185,7 @@ class _NewsScreenState extends State<NewsScreen> {
                           ),
                         ),
                       ),
-                      if (widget.inputText != null &&
-                          widget.inputText!.isNotEmpty)
+                      if (widget.inputText != null && widget.inputText!.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.only(left: 10, bottom: 4),
                           child: Text(
@@ -185,12 +202,13 @@ class _NewsScreenState extends State<NewsScreen> {
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(16),
-                        margin: const EdgeInsets.symmetric(horizontal: 0),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFCFBFB),
                           borderRadius: BorderRadius.circular(24),
                           border: Border.all(
-                              color: const Color(0xFFFCFBFB), width: 1.5),
+                            color: const Color(0xFFFCFBFB),
+                            width: 1.5,
+                          ),
                           boxShadow: const [
                             BoxShadow(
                               color: Colors.black26,
@@ -231,9 +249,38 @@ class _NewsScreenState extends State<NewsScreen> {
                           ],
                         ),
                       ),
+
+                      const SizedBox(height: 20),
+
+                      // ✅ 뉴스 기록 보기 버튼 추가
+                      Center(
+                        child: TextButton.icon(
+                          onPressed: isPlaying
+                              ? null // 🔒 재생 중이면 비활성화
+                              : () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const NewsHistoryScreen(),
+                                    ),
+                                  );
+                                },
+                          icon: const Icon(Icons.history),
+                          label: const Text(
+                            "뉴스 기록 보기",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'HakgyoansimGeurimilgi',
+                            ),
+                          ),
+                        ),
+                      ),
+
                     ],
                   ),
                 ),
     );
   }
+
 }

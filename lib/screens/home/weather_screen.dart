@@ -39,6 +39,7 @@ class _TodayWeatherScreenState extends State<TodayWeatherScreen> {
     }
 
     final placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
+
     if (placemarks.isEmpty) {
       setState(() {
         isLoading = false;
@@ -46,10 +47,25 @@ class _TodayWeatherScreenState extends State<TodayWeatherScreen> {
       return;
     }
 
-    final place = placemarks[0];
+    // 가장 정보가 많은 placemark 선택
+    int _placemarkScore(Placemark p) {
+      return [
+        p.thoroughfare,
+        p.subLocality,
+        p.locality,
+        p.administrativeArea
+      ].where((e) => e != null && e.trim().isNotEmpty).length;
+    }
+
+    final place = placemarks.reduce((a, b) {
+      int aScore = _placemarkScore(a);
+      int bScore = _placemarkScore(b);
+      return aScore >= bScore ? a : b;
+    });
     final String searchLocation =
         place.thoroughfare ?? place.subLocality ?? place.locality ?? place.administrativeArea ?? '서울';
 
+// 사용자에게 보여줄 전체 주소
     fullAddress = [
       place.administrativeArea,
       place.locality,

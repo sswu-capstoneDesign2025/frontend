@@ -10,24 +10,24 @@ class HealthScreen extends StatefulWidget {
 }
 
 class _HealthScreenState extends State<HealthScreen> {
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-  List<_AlarmItem> alarms = [
-    _AlarmItem(title: "당뇨 알람", time: TimeOfDay(hour: 9, minute: 0), enabled: true),
-    _AlarmItem(title: "스트레칭 알람", time: TimeOfDay(hour: 9, minute: 0), enabled: true),
-    _AlarmItem(title: "약 알람", time: TimeOfDay(hour: 8, minute: 0), enabled: false),
-  ];
+  List<Map<String, dynamic>> alarms = [];
 
   @override
   void initState() {
     super.initState();
-    NotificationService.init();
-    for (var alarm in alarms) {
-      if (alarm.enabled) NotificationService.scheduleAlarm(alarm);
-    }
+    NotificationService.init().then((_) async {
+      alarms = await NotificationService.loadAlarms();
+      setState(() {});
+      for (var alarm in alarms) {
+        if (alarm['enabled'] == true) {
+          NotificationService.scheduleAlarm(alarm);
+        }
+      }
+    });
   }
 
   void _addAlarm() async {
-    final result = await showDialog<_AlarmItem>(
+    final result = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => _AlarmDialog(),
     );
@@ -35,6 +35,17 @@ class _HealthScreenState extends State<HealthScreen> {
     if (result != null) {
       setState(() => alarms.add(result));
       NotificationService.scheduleAlarm(result);
+      NotificationService.saveAlarms(alarms);
+    }
+  }
+
+  void _toggleAlarm(int index, bool enabled) {
+    setState(() => alarms[index]['enabled'] = enabled);
+    NotificationService.saveAlarms(alarms);
+    if (enabled) {
+      NotificationService.scheduleAlarm(alarms[index]);
+    } else {
+      NotificationService.cancelAlarm(alarms[index]['id']);
     }
   }
 
@@ -46,84 +57,25 @@ class _HealthScreenState extends State<HealthScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: const Text('말벗', style: TextStyle(fontWeight: FontWeight.bold)),
-        actions: const [
-          Icon(Icons.alarm, size: 28),
-          SizedBox(width: 16),
-          Icon(Icons.account_circle, size: 28),
-          SizedBox(width: 12),
-        ],
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.black12),
-            ),
-            child: IntrinsicHeight(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: const [
-                      Text("나이: 72세", style: TextStyle(fontWeight: FontWeight.bold)),
-                      SizedBox(height: 4),
-                      Text("성별: 남성", style: TextStyle(fontWeight: FontWeight.bold)),
-                      SizedBox(height: 4),
-                      Text("지역: 대구", style: TextStyle(fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  const SizedBox(width: 16),
-                  VerticalDivider(
-                    color: Colors.black26,
-                    thickness: 1,
-                    width: 32,
-                  ),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: const [
-                      Text("관심", style: TextStyle(fontWeight: FontWeight.bold)),
-                      SizedBox(height: 8),
-                      Column(
-                          children: [
-                            Chip(label: Text('고혈압'), backgroundColor: Color(0xFFD7F3C7)),
-                            SizedBox(height: 6),
-                            Chip(label: Text('관절염'), backgroundColor: Color(0xFFD7F3C7)),
-                            SizedBox(height: 6),
-                            Chip(label: Text('당뇨'), backgroundColor: Color(0xFFD7F3C7)),
-                          ]),
-                    ],
-                  ),
-                ],
+      body: ListView.builder(
+        itemCount: alarms.length,
+        itemBuilder: (context, index) {
+          final alarm = alarms[index];
+          final time = TimeOfDay(hour: alarm['hour'], minute: alarm['minute']);
+          final formattedTime = time.format(context);
+
+          return Card(
+            child: ListTile(
+              title: Text(alarm['title']),
+              subtitle: Text("매일 $formattedTime"),
+              trailing: Switch(
+                value: alarm['enabled'],
+                onChanged: (val) => _toggleAlarm(index, val),
               ),
             ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: alarms.length,
-              itemBuilder: (context, index) {
-                final alarm = alarms[index];
-                return _buildAlarmTile(alarm, (val) {
-                  setState(() => alarm.enabled = val);
-                  if (val) {
-                    NotificationService.scheduleAlarm(alarm);
-                  } else {
-                    NotificationService.cancelAlarm(alarm.id);
-                  }
-                });
-              },
-            ),
-          )
-        ],
+          );
+        },
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addAlarm,
@@ -131,33 +83,6 @@ class _HealthScreenState extends State<HealthScreen> {
       ),
     );
   }
-
-  Widget _buildAlarmTile(_AlarmItem alarm, Function(bool) onChanged) {
-    final formattedTime = alarm.time.format(context);
-    return Card(
-      color: Colors.white,
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.black12),
-      ),
-      child: ListTile(
-        title: Text(alarm.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text("매일 $formattedTime"),
-        trailing: Switch(value: alarm.enabled, onChanged: onChanged),
-      ),
-    );
-  }
-}
-
-class _AlarmItem {
-  final int id;
-  final String title;
-  final TimeOfDay time;
-  bool enabled;
-
-  _AlarmItem({required this.title, required this.time, this.enabled = true})
-      : id = DateTime.now().millisecondsSinceEpoch;
 }
 
 class _AlarmDialog extends StatefulWidget {
@@ -209,7 +134,14 @@ class _AlarmDialogState extends State<_AlarmDialog> {
           onPressed: () {
             final title = _titleController.text.trim();
             if (title.isNotEmpty) {
-              Navigator.pop(context, _AlarmItem(title: title, time: _selectedTime));
+              final alarm = {
+                'id': DateTime.now().millisecondsSinceEpoch,
+                'title': title,
+                'hour': _selectedTime.hour,
+                'minute': _selectedTime.minute,
+                'enabled': true,
+              };
+              Navigator.pop(context, alarm);
             }
           },
           child: const Text("추가"),

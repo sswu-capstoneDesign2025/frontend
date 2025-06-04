@@ -157,9 +157,7 @@ class _MyPageState extends State<MyPage> {
       final prefs = await SharedPreferences.getInstance();
       final fetchedNickname = userData['nickname'];
 
-      await prefs.setString('nickname', fetchedNickname); // ✅ 저장
-      print('✅ 닉네임 SharedPreferences에 저장됨: $fetchedNickname');
-
+      await prefs.setString('nickname', fetchedNickname);
       setState(() {
         nickname = fetchedNickname;
         name = userData['name'];

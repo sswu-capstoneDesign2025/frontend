@@ -1,4 +1,4 @@
-import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -26,33 +26,38 @@ class NotificationService {
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const initSettings = InitializationSettings(android: androidSettings);
 
-    // 권한 요청
-    if (Platform.isAndroid) {
+    // 권한 요청 (웹은 제외)
+    if (!kIsWeb) {
       final plugin = _notificationsPlugin
           .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
       await plugin?.requestExactAlarmsPermission();
       await plugin?.requestNotificationsPermission();
     }
 
-    // 알림 클릭 시 동작 설정
+    // ✅ 여기에 포함되어 있어야 함
     await _notificationsPlugin.initialize(
       initSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
         final payload = response.payload ?? '';
+        print('🔔 알림 클릭됨! payload: $payload');
         navigatorKey.currentState?.push(MaterialPageRoute(
           builder: (_) => AlarmPopup(time: payload, message: '알람 시간입니다!'),
         ));
       },
     );
 
-    // 알람 채널 생성
-    await _notificationsPlugin
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(_channel);
+    // 채널 생성 (웹은 제외)
+    if (!kIsWeb) {
+      await _notificationsPlugin
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(_channel);
+    }
   }
 
   /// 알람 예약
   static Future<void> scheduleAlarm(Map<String, dynamic> alarm) async {
+    if (kIsWeb) return; // 웹에서는 알람 예약 안 함
+
     final int id = alarm['id'];
     final String title = alarm['title'];
     final TimeOfDay time = TimeOfDay(
@@ -99,7 +104,9 @@ class NotificationService {
 
   /// 알람 취소
   static Future<void> cancelAlarm(int id) async {
-    await _notificationsPlugin.cancel(id);
+    if (!kIsWeb) {
+      await _notificationsPlugin.cancel(id);
+    }
   }
 
   /// 알람 목록 SharedPreferences 저장
@@ -117,3 +124,4 @@ class NotificationService {
     return List<Map<String, dynamic>>.from(jsonDecode(jsonStr));
   }
 }
+

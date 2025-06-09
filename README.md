@@ -110,7 +110,9 @@ Others:
 ## ⚙️ Installation
 
 1. **Clone the Repository**
-
+```bash
+https://github.com/sswu-capstoneDesign2025/frontend.git
+```
 2. **Install Dependencies**
 ```bash
 flutter pub get

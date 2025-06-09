@@ -29,6 +29,7 @@ This app delivers news, weather, health alerts, and personal story sharing featu
 ---
 
 ## 🏗️ Project Structure
+```bash
 lib/
 ├── main.dart                          # App entry point, handles routing and theme setup
 
@@ -102,6 +103,7 @@ Others:
 
 
 > ℹ️ Platform directories like `linux/`, `macos/`, `windows/` are included by default for Flutter multi-platform support.
+```
 
 ---
 

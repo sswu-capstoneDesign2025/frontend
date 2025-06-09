@@ -112,19 +112,19 @@ Others:
 1. **Clone the Repository**
 
 2. **Install Dependencies**
-
- flutter pub get
-
-
+```bash
+flutter pub get
+```
+  
 3. **▶️ Running the App**
-
+```bash
 flutter run            # Mobile
 flutter run -d chrome  # Web
-
+```
 4. **🧪 Running Tests**
-
+```bash
 flutter test
-
+```
 ---
 ## 🖼️ Screens Overview
 | Screen           | Description                                |

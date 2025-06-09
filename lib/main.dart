@@ -3,53 +3,51 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:capstone_story_app/screens/root_decider.dart';
 import 'package:capstone_story_app/screens/home/home_screen.dart';
+import 'package:capstone_story_app/screens/userstore/user_store.dart';
+import 'package:capstone_story_app/screens/userstore/other_user_store_screen.dart';
+import 'package:capstone_story_app/screens/home/news_screen.dart';
+import 'package:capstone_story_app/services/notification_service.dart'; // ✅ 추가
+import 'package:timezone/data/latest_all.dart' as tz; // ⬅️ 이 줄 추가
 
-Future<void> main() async {
+
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   await dotenv.load(fileName: '.env');
 
+  tz.initializeTimeZones(); // ⬅️ 이 줄 추가
+  // ✅ 알림 초기화
+  await NotificationService.init();
+
   runApp(
-    ProviderScope(
-      child: MyApp(),
-    ),
+    const ProviderScope(child: MyApp()),
   );
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Capstone App',
+      navigatorKey: navigatorKey,
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
       home: const RootDecider(),
       routes: {
-        '/home': (_) => const HomeScreen(),                  // ← named route 등록
+         '/home': (_) => const HomeScreen(),
       },
     );
   }
 }
+
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});

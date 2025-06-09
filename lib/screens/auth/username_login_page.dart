@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:capstone_story_app/services/auth_service.dart';
 import 'package:capstone_story_app/screens/home/home_screen.dart';
 
+import '../root_decider.dart';
+
 class UsernameLoginPage extends StatefulWidget {
   const UsernameLoginPage({Key? key}) : super(key: key);
 
@@ -139,10 +141,14 @@ class _UsernameLoginPageState extends State<UsernameLoginPage> {
                         username: _usernameController.text.trim(),
                         password: _passwordController.text,
                       );
-                      await AuthService.saveToken(token!);
+                      await AuthService.loginWithUsernamePassword(
+                        username: _usernameController.text.trim(),
+                        password: _passwordController.text,
+                      );
+
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (_) => const HomeScreen()),
+                        MaterialPageRoute(builder: (_) => const RootDecider()),
                       );
                     } catch (eF) {
                       print("로그인 에러: $eF");
